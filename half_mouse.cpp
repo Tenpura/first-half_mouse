@@ -150,7 +150,7 @@ void main(void) {
 	float_log.reset_log();
 	//run::spin_turn(360);
 	//control::start_wall_control();
-	run::accel_run(0.18 * 4, 0, 0);
+	run::accel_run(0.18 * 3, 0, 0);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
