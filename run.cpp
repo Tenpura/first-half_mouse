@@ -282,8 +282,8 @@ void run::slalom_for_path(const signed char right_or_left,
 }
 
 void run::spin_turn(const float target_degree) {
-	const static float max_angular_velocity = 1.0;	//rad/s
-	float angular_acceleration = 1.0;				//rad/s^2
+	const static float max_angular_velocity = 2.0;	//rad/s
+	float angular_acceleration = 2.0;				//rad/s^2
 	float angle_degree = 0;
 
 	control::stop_wall_control();

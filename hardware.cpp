@@ -520,8 +520,8 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 3, 25, 0 };
-const PID photo_gain = { 0.01, 0, 0 };
+const PID gyro_gain = { 4.5, 27, 0 };
+const PID photo_gain = { 0.001, 0.00, 0 };
 const PID encoder_gain = { 320, 7000, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
@@ -689,7 +689,7 @@ void control::reset_delta() {
 
 void control::fail_safe() {
 	//TODO 閾値どのくらいかわからない。Gyroも参照すべき？
-	if ((encoder_delta.I > 0.1) || (gyro_delta.I > 1)) {
+	if (encoder_delta.P > 0.5)  {
 		motor::sleep_motor();
 	}
 }

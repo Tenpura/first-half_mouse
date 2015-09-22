@@ -148,9 +148,10 @@ void main(void) {
 
 	mouse::set_distance_m(0);
 	float_log.reset_log();
+
 	//run::spin_turn(360);
-	//control::start_wall_control();
-	run::accel_run(0.18 * 3, 0, 0);
+	control::start_wall_control();
+	run::accel_run(0.18 * 10, 0, 0);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
@@ -189,32 +190,19 @@ void interrupt_cmt0() {
 
 	motor::mtu_set();	//mtuをdutyに応じて変更
 
-	//control::fail_safe();
+	control::fail_safe();
 
 	//int_log::put_log((int) (encoder::get_encoder_left() * 1000));
-	float_log::put_log(gyro::get_angular_velocity());
+	float_log::put_log(control::photo_delta.P);
 
 }
 
 void interrupt_cmt1() {
 	MSTP( CMT1 ) = 0;		// 　CMT1スタンバイ解除
-	const static int wait_number = 2000;
+	const static int wait_number = 1000;
 	photo::turn_off_all();
 
 	//TODO LEDモード選択で光らないモードを作る！
-	photo::set_ad(front_right, false);
-	photo::light(front_right);
-	for (int i = 0; i < wait_number; i++) {
-	}
-	photo::set_ad(front_right, true);
-	photo::turn_off(front_right);
-
-	photo::set_ad(front_left, false);
-	photo::light(front_left);
-	for (int i = 0; i < wait_number; i++) {
-	}
-	photo::set_ad(front_left, true);
-	photo::turn_off(front_left);
 
 	photo::set_ad(right, false);
 	photo::light(right);
@@ -229,6 +217,20 @@ void interrupt_cmt1() {
 	}
 	photo::set_ad(left, true);
 	photo::turn_off(left);
+
+	photo::set_ad(front_right, false);
+	photo::light(front_right);
+	for (int i = 0; i < wait_number; i++) {
+	}
+	photo::set_ad(front_right, true);
+	photo::turn_off(front_right);
+
+	photo::set_ad(front_left, false);
+	photo::light(front_left);
+	for (int i = 0; i < wait_number; i++) {
+	}
+	photo::set_ad(front_left, true);
+	photo::turn_off(front_left);
 
 }
 

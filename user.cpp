@@ -44,6 +44,7 @@ unsigned long get_count_ms() {
 
 unsigned long wait_package(const unsigned char wait_mode,
 		const unsigned long set_ms_value) {
+
 	static unsigned long count_ms = 0;
 	if (wait_mode == 0) {	//setのとき
 		count_ms = set_ms_value;	//代入
