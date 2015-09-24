@@ -31,6 +31,8 @@ private:
 
 	static unsigned long mouse_count_ms;//マウスの時間[msec].基本リセットしない
 
+	static bool fail_flag;		//フェイルセーフがかかるとこのフラグがTRUEに
+
 	static POSITION position;//マウスの位置（座標）
 	static unsigned char mouse_direction;//マウスの向き
 
@@ -72,6 +74,9 @@ public:
 	static void set_direction(const signed char direction_x, const signed char direction_y);
 
 
+	static bool get_fail_flag();		//フェイルセーフがかかったかどうかの判別用
+	static void set_fail_flag(bool set_flag);
+
 	static void cal_accel();//加速を行う。速度の加減算
 	static void cal_distance();//距離計算
 
@@ -107,6 +112,7 @@ private:
 
 	//目標のマスのまだ見てない壁の数を数え上げる
 	static unsigned int count_unknown_wall(unsigned char target_x, unsigned char target_y);
+
 
 	//引数に応じて次の行動をマウスが実行する（実際に動く部分）
 	static void run_next_action(ACTION_TYPE next_action);

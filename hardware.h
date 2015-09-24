@@ -112,6 +112,7 @@ private:
 	static signed int right_ad, left_ad, front_right_ad, front_left_ad;
 	static signed int right_ref, left_ref, front_right_ref, front_left_ref;
 	static void switch_led(PHOTO_TYPE sensor_type, unsigned char one_or_zero);
+	static bool light_flag;		//赤外線LEDを光らせてセンサー値を読むかどうかのフラグ
 
 	photo();
 
@@ -121,7 +122,7 @@ public:
 	static void turn_off(PHOTO_TYPE sensor_type);
 	static void turn_off_all();		//すべて消す
 
-	//TODO boolで引数にしなくても、自動で判別してもいいかも
+	//TODO boolで引数にしなくても、関数内で判別してもいいかも
 	//消えてれば基準値として、光っていればその差分を記録する
 	static void set_ad(PHOTO_TYPE sensor_type, bool on_light);
 

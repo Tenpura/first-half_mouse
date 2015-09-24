@@ -123,10 +123,10 @@ void main(void) {
 	myprintf("%f \n\r", gyro::least_square_slope);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+
 		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
 				photo::get_ad(left), photo::get_ad(front_right),
 				photo::get_ad(front_left));
-
 		wait_ms(100);
 
 	}
@@ -149,7 +149,6 @@ void main(void) {
 	mouse::set_distance_m(0);
 	float_log.reset_log();
 
-	//run::spin_turn(360);
 	control::start_wall_control();
 	run::accel_run(0.18 * 10, 0, 0);
 
@@ -193,7 +192,7 @@ void interrupt_cmt0() {
 	control::fail_safe();
 
 	//int_log::put_log((int) (encoder::get_encoder_left() * 1000));
-	float_log::put_log(control::photo_delta.P);
+	float_log::put_log(photo::get_ad(right));
 
 }
 

@@ -17,6 +17,8 @@ MAP_DATA mouse::now_map;
 POSITION mouse::position;
 unsigned char mouse::mouse_direction;
 
+bool mouse::fail_flag = false;
+
 void mouse::reset_count() {
 	mouse_count_ms = 0;
 }
@@ -142,6 +144,14 @@ void mouse::set_direction(const signed char direction_x,
 		}
 		break;
 	}
+}
+
+bool mouse::get_fail_flag(){
+	return fail_flag;
+}
+
+void mouse::set_fail_flag(bool set_flag){
+	fail_flag = set_flag;
 }
 
 void mouse::cal_accel() {
@@ -561,6 +571,12 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 	ACTION_TYPE next_action;	//次の行動を管理
 
 	while (adachi_flag) {
+		//フェイルセーフが掛かっていればそこで抜ける
+		if(mouse::get_fail_flag()){
+			adachi_flag = false;
+			break;
+		}
+
 		mouse::set_distance_m(0);
 
 		//向きを取得
