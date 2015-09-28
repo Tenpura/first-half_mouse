@@ -236,12 +236,12 @@ void run::accel_run(const float distance_m, const float end_velocity,
 //TODO 実装テストはまだ。とりあえず書いただけ
 void run::slalom_for_path(const signed char right_or_left,
 		const unsigned char select_mode) {
-	float distance = parameter::get_slalom_para(before_distance, right_or_left,
+	float distance = parameter::get_slalom(before_distance, right_or_left,
 			select_mode);
-	float slalom_velocity = parameter::get_slalom_para(velocity, right_or_left,
+	float slalom_velocity = parameter::get_slalom(velocity, right_or_left,
 			select_mode);
 	float angular_acceleration = ABS(
-			parameter::get_slalom_para(angular_accel, right_or_left,
+			parameter::get_slalom(angular_accel, right_or_left,
 					select_mode));
 	float angle_degree = 0;
 
@@ -259,21 +259,21 @@ void run::slalom_for_path(const signed char right_or_left,
 
 	//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
-	angle_degree = parameter::get_slalom_para(clothoid_angle, right_or_left,
+	angle_degree = parameter::get_slalom(clothoid_angle, right_or_left,
 			select_mode);
 	while (ABS(gyro::get_angle()) < angle_degree) {
 	}
 
 	//等角速度
 	mouse::set_angular_acceleration(0);
-	angle_degree = parameter::get_slalom_para(target_angle, right_or_left,
+	angle_degree = parameter::get_slalom(target_angle, right_or_left,
 			select_mode) - angle_degree;
 	while (ABS(gyro::get_angle()) < angle_degree) {
 	}
 
 	//角減速区間
 	mouse::set_angular_acceleration(-angular_acceleration);
-	angle_degree = parameter::get_slalom_para(target_angle, right_or_left,
+	angle_degree = parameter::get_slalom(target_angle, right_or_left,
 			select_mode);
 	while (ABS(gyro::get_angle()) < angle_degree) {
 	}
@@ -284,7 +284,7 @@ void run::slalom_for_path(const signed char right_or_left,
 	//後ろ距離分走る
 	control::start_wall_control();
 	mouse::set_distance_m(0);
-	distance = parameter::get_slalom_para(after_distance, right_or_left,
+	distance = parameter::get_slalom(after_distance, right_or_left,
 			select_mode);
 	accel_run(distance, slalom_velocity, select_mode);
 
@@ -347,6 +347,10 @@ void run::spin_turn(const float target_degree) {
 	mouse::set_distance_m(0);
 
 	control::start_wall_control();
+}
+
+void run::path(const unsigned char run_mode){
+
 }
 
 run::run() {

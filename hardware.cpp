@@ -557,7 +557,7 @@ void control::cal_delta() {
 	//エンコーダーのΔ計算
 	before_p_delta = encoder_delta.P;	//積分用
 	encoder_delta.P = (mouse::get_ideal_velocity() - encoder::get_velocity());
-	encoder_delta.I += (encoder_delta.P / 1000);
+	encoder_delta.I += (encoder_delta.P * CONTROL_PERIOD);
 	//encoder_delta.D = (encoder_delta.P - before_p_delta) * 1000;
 
 	//センサーのΔ計算
@@ -621,15 +621,15 @@ void control::cal_delta() {
 	right_before = right_now;
 	left_before = left_now;
 
-	photo_delta.P = (photo_left_delta - photo_right_delta);
-	photo_delta.I += (photo_delta.P / 1000.0);
+	photo_delta.P = (photo_right_delta - photo_left_delta);
+	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);
 	//photo_delta.D = (photo_delta.P - before_p_delta) * 1000;
 
 //ジャイロのΔ計算
 	before_p_delta = gyro_delta.P;	//積分用
 	gyro_delta.P = (mouse::get_ideal_angular_velocity()
 			- gyro::get_angular_velocity());
-	gyro_delta.I += (gyro_delta.P / 1000);
+	gyro_delta.I += (gyro_delta.P * CONTROL_PERIOD);
 //gyro_delta.D = (gyro_delta.P - before_p_delta) * 1000;
 
 }
@@ -640,7 +640,7 @@ float control::control_velocity() {
 
 float control::control_angular_velocity() {
 	if (wall_control_flag) {
-		return (cross_delta_gain(sen_gyro) - cross_delta_gain(sen_photo));
+		return (cross_delta_gain(sen_gyro) + cross_delta_gain(sen_photo));
 	} else {
 		return cross_delta_gain(sen_gyro);
 	}

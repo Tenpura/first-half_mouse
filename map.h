@@ -107,9 +107,9 @@ public:
 
 	void path_reset();
 	unsigned char get_path_flag(unsigned int index_number);
-	unsigned char get_path_straight(unsigned int index_number);
-	unsigned char get_path_turn_type(unsigned int index_number);
-	unsigned char get_path_turn_muki(unsigned int index_number);
+	float get_path_straight(unsigned int index_number);			//返り値は距離[m]
+	SLALOM_TYPE get_path_turn_type(unsigned int index_number);
+	unsigned char get_path_turn_muki(unsigned int index_number);		//返り値はMUKI_RIGHT　or　MUKI_LEFT
 
 };
 

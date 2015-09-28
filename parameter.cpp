@@ -8,16 +8,16 @@
 #include"parameter.h"
 //ideal_photo[x][y]	xは0がクラシック,1がハーフ	yが光学センサの向きに対応。
 //right left front_right front_left
-const unsigned int parameter::ideal_photo[2][4] = { { 3800, 3300, 10815, 10100 }, { 100,
-		100, 100, 100 } };
-const unsigned int parameter::min_wall_photo[2][4]={{2800,3000,0,0},{0,0,0,0}};
-
+const unsigned int parameter::ideal_photo[2][4] = { { 3800, 3300, 1815, 1100 },
+		{ 100, 100, 100, 100 } };
+const unsigned int parameter::min_wall_photo[2][4] = { { 2800, 3000, 0, 0 }, {
+		0, 0, 0, 0 } };
 
 //0番目は探索用
-const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0, SEARCH_VELOCITY, 2.0 },
-		{ 2.0, 2.0, 2.0 }, { 2.0, 2.0, 2.0 } };
+const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0,
+		SEARCH_VELOCITY, 2.0 }, { 2.0, 2.0, 2.0 }, { 2.0, 2.0, 2.0 } };
 
-const INIT_SLALOM parameter::right_slalom[RUN_MODE_NUMBER]={0};
+const INIT_SLALOM parameter::right_slalom[RUN_MODE_NUMBER] = { 0 };
 const INIT_SLALOM parameter::left_slalom[RUN_MODE_NUMBER] = { 0 };
 
 float parameter::get_run_acceleration(const unsigned char select_mode) {
@@ -73,7 +73,6 @@ unsigned int parameter::get_min_wall_photo(PHOTO_TYPE photo_type) {
 	return 0;
 }
 
-
 float parameter::get_run_max_velocity(const unsigned char select_mode) {
 	if (select_mode >= RUN_MODE_NUMBER) {			//存在しないモードを選択したらエラー
 		error();
@@ -92,7 +91,7 @@ float parameter::get_run_de_acceleration(const unsigned char select_mode) {
 	return straight_run[select_mode].de_acceleration;
 }
 
-float parameter::get_slalom_para(const SLALOM_ELEMENT slalom_element,
+float parameter::get_slalom(const SLALOM_ELEMENT slalom_element,
 		const signed char right_or_left, const unsigned char select_mode) {
 
 	if (select_mode >= RUN_MODE_NUMBER) {			//存在しないモードを選択したらエラー

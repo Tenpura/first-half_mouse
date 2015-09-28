@@ -18,7 +18,7 @@
 
 #define LEAST_SQUARE_TIME	2000		//ジャイロの最小二乗法を何ms出かけるか
 
-#define LOG_COUNT 2000	//LOGをいくつとるか。最低1、0にはしないこと
+#define LOG_COUNT 1000	//LOGをいくつとるか。最低1、0にはしないこと
 #define INT_LOG_COUNT	1	//Int型のLogをいくつとるか　最低1
 #define MAX_DUTY	70	//motorのduty制限[%]
 
@@ -59,7 +59,7 @@ public:
 	static float get_run_max_velocity(const unsigned char select_mode);
 	static float get_run_de_acceleration(const unsigned char select_mode);
 
-	static float get_slalom_para( const SLALOM_ELEMENT slalom_element, const signed char right_or_left, const unsigned char select_mode);
+	static float get_slalom( const SLALOM_ELEMENT slalom_element, const signed char right_or_left, const unsigned char select_mode);
 
 };
 

@@ -146,9 +146,9 @@ void main(void) {
 
 	my7seg::count_down(3, 500);
 
-	mouse::set_distance_m(0);
 	float_log.reset_log();
 
+	mouse::set_distance_m(0);
 	control::start_wall_control();
 	run::accel_run(0.18 * 10, 0, 0);
 	//run::spin_turn(360);

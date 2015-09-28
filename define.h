@@ -10,18 +10,16 @@
 #ifndef DEFINE_H_
 #define DEFINE_H_
 
-
 #define CONTROL_PERIOD 0.001		//制御周期[sec]
 
 //同じ機体を使ってる限り変わらないdefineはココに書く
 
-#define MAZE_SIZE	32
+#define MAZE_SIZE	16
 
 #define GOAL_x 0
 #define GOAL_y 1
 
-#define PATH_MAX 3
-
+#define PATH_MAX 200
 
 #define LOGIK_V 3.3
 
@@ -86,20 +84,20 @@ typedef union {
 	struct {
 		unsigned char :4;		//
 		//	unsigned char now	:2;		//現在の方向を管理、この数、save_directionをビットシフトすると現在の向きに対応
-		unsigned char up :1;//↑	x=0,y=1の方向
-		unsigned char down :1;//↓	x=0,y=-1の方向
-		unsigned char left :1;//←	x=-1,y=0の方向
-		unsigned char right :1;//→	x=1,y=0の方向
-	}element;
+		unsigned char up :1;		//↑	x=0,y=1の方向
+		unsigned char down :1;		//↓	x=0,y=-1の方向
+		unsigned char left :1;		//←	x=-1,y=0の方向
+		unsigned char right :1;		//→	x=1,y=0の方向
+	} element;
 } DIRECTION;				//次に行くマスの方向を保存
 
 //PATH
 typedef union {
 	unsigned short all;					//一括で見る
 	struct {
-		unsigned char :3;		//
+		unsigned char :2;		//
 		unsigned char flag :1;		//配列の最後かチェック用
-		unsigned char turn :3;		//ターンの種類を判別
+		unsigned char turn :4;		//ターンの種類を判別
 		unsigned char muki :1;		//ターンの方向を判別
 		unsigned char distance :8;		//直進する距離を判別
 	} element;
@@ -158,7 +156,7 @@ typedef struct {
 
 //光学センサの種類
 enum PHOTO_TYPE {
-	right=0, left=1, front_right=2, front_left=3
+	right = 0, left = 1, front_right = 2, front_left = 3
 };
 
 //台形加速に用いるパラメータ用構造体
@@ -170,16 +168,16 @@ typedef struct {
 
 //スラモームの種類
 typedef enum {
-	big_90 = 0,
-	big_180 = 1,
-	begin_45=2,
-	end_45=3,
-	begin_135=4,
-	end_135=5,
-	oblique_90=6,
-	small=7,
-	spin_turn=8
-
+	none = 0,
+	small = 1,
+	big_90 = 2,
+	big_180 = 3,
+	begin_45 = 4,
+	end_45 = 5,
+	begin_135 = 6,
+	end_135 = 7,
+	oblique_90 = 8,
+	spin_turn = 9
 } SLALOM_TYPE;
 
 //スラローム用構造体
@@ -190,7 +188,7 @@ typedef struct {
 	float before_distance;		//前距離[m]
 	float after_distance;		//後距離[m]
 	float angular_accel;		//角加速度
-	float time;					//どれだけ時間がかかるのか[sec]
+float time;					//どれだけ時間がかかるのか[sec]
 } INIT_SLALOM;
 
 //スラロームパラメーターの要素

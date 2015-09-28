@@ -166,6 +166,7 @@ private:
 	control();
 
 public:
+	//デバック時に参照できるようpublicに置いてある
 	static PID gyro_delta,photo_delta,encoder_delta;//各種Δ
 
 	static void cal_delta();//割り込み関数内で、偏差を計算する
