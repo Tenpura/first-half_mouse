@@ -93,7 +93,7 @@ private:
 			unsigned char now :4;//現在の方向を管理、この数、save_directionをビットシフトすると現在の向きに対応
 		}element;
 	}SAVE_DIRECTION;				//次に行くマスの方向を保存
-	static PATH path_memory[PATH_MAX];
+	static PATH path_memory[PATH_MAX];	//flagは続行フラグ
 
 	void set_step_for_shortest(unsigned char target_x,unsigned char target_y);//最短用の歩数マップ作製
 	void displace_path(unsigned int path_number);//path_number目のpathを消してからpathを一個ずらす
@@ -106,10 +106,10 @@ public:
 	void create_path_naname();//大回りとナナメを追加したパス
 
 	void path_reset();
-	unsigned char get_path_flag(unsigned int index_number);
-	float get_path_straight(unsigned int index_number);			//返り値は距離[m]
-	SLALOM_TYPE get_path_turn_type(unsigned int index_number);
-	unsigned char get_path_turn_muki(unsigned int index_number);		//返り値はMUKI_RIGHT　or　MUKI_LEFT
+	static bool get_path_flag(unsigned int index_number);				//pathがあるならtrue,ないならfalseを返す.
+	static float get_path_straight(unsigned int index_number);			//返り値は距離[m]
+	static SLALOM_TYPE get_path_turn_type(unsigned int index_number);
+	static unsigned char get_path_turn_muki(unsigned int index_number);		//返り値はMUKI_RIGHT　or　MUKI_LEFT
 
 };
 

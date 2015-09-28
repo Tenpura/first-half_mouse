@@ -969,7 +969,7 @@ void path::set_step_for_shortest(unsigned char target_x,
 void path::displace_path(unsigned int path_number) {
 	//1個ずらす
 	for (unsigned int number = path_number;
-			path_memory[number].element.flag == FALSE; number++) {
+			path_memory[number].element.flag == TRUE; number++) {
 		path_memory[number].all = path_memory[number + 1].all;
 	}
 }
@@ -977,7 +977,7 @@ void path::displace_path(unsigned int path_number) {
 void path::improve_path() {
 	unsigned int count = 0;
 
-	while (path_memory[count].element.flag == FALSE) {		//pathが終われば終了
+	while (path_memory[count].element.flag == TRUE) {		//pathが終われば終了
 
 		if (path_memory[count].element.distance >= 1) {		//90mm以上直進するなら
 
@@ -1025,7 +1025,7 @@ void path::improve_advance_path() {
 	unsigned char temp_distance = 0;	//一時的な距離保存
 	unsigned char naname_flag = FALSE;	//現在機体が斜めかを判断	ONなら斜め走行中
 
-	while (path_memory[count].element.flag == FALSE) {		//pathが終われば終了
+	while (path_memory[count].element.flag == TRUE) {		//pathが終われば終了
 
 		if (naname_flag == TRUE) {			//斜め走行中なら	確実に直進距離(distance)が0のはず
 
@@ -1149,6 +1149,7 @@ void path::create_path() {
 	straight_flag = FALSE;	//フラグは折っておく
 
 	path_memory[count].element.distance += 1;	//最初は必ず半区画直進する
+	path_memory[count].element.flag = TRUE;		//最初だし続行フラグを建てる
 
 	while (1) {
 
@@ -1278,13 +1279,14 @@ void path::create_path() {
 				}
 			}
 
+			path_memory[count].element.flag = TRUE;		//パスが続くのなら続行フラグを建てる
 			count++;
 		}
 
 	}
 
 	path_memory[count].element.distance += 1;	//90mm直進を追加	ゴールに入りきるため
-	path_memory[count].element.flag = TRUE;		//終了フラグを建てておく
+	path_memory[count+1].element.flag = FALSE;		//続行フラグを折っておく
 
 }
 
@@ -1303,11 +1305,16 @@ void path::path_reset() {
 	for (reset_count = 0; reset_count < PATH_MAX; reset_count++) {
 		path_memory[reset_count].all = 0;
 	}
-	path_memory[PATH_MAX - 1].element.flag = 1;
 }
 
-unsigned char path::get_path_flag(unsigned int index_number) {
-	return path_memory[index_number].element.flag;
+bool path::get_path_flag(unsigned int index_number) {
+	//pathがあるならtrue,ないならfalseを返す
+	if(path_memory[index_number].element.flag==TRUE){
+		return true;
+	}else{
+		return false;
+	}
+
 }
 
 float path::get_path_straight(unsigned int index_number) {

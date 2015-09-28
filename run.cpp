@@ -147,6 +147,7 @@ void mouse::set_direction(const signed char direction_x,
 }
 
 bool mouse::get_fail_flag() {
+	//フェイルセーフがかかったからtrue
 	return fail_flag;
 }
 
@@ -241,8 +242,7 @@ void run::slalom_for_path(const signed char right_or_left,
 	float slalom_velocity = parameter::get_slalom(velocity, right_or_left,
 			select_mode);
 	float angular_acceleration = ABS(
-			parameter::get_slalom(angular_accel, right_or_left,
-					select_mode));
+			parameter::get_slalom(angular_accel, right_or_left, select_mode));
 	float angle_degree = 0;
 
 	//前距離の分走る
@@ -349,7 +349,75 @@ void run::spin_turn(const float target_degree) {
 	control::start_wall_control();
 }
 
-void run::path(const unsigned char run_mode){
+void run::path(const float finish_velocity, const unsigned char run_mode) {
+	float next_velocity = 0;
+	bool naname_flag = false;
+	bool switch_flag = false;	//スイッチを押して止めたかどうか
+
+	for (int path_count = 0;
+			(path_count < PATH_MAX) && (path::get_path_flag(path_count));
+			path_count++) {
+		if (mouse::get_fail_flag()) {		//フェイルセーフが掛かっていたら終了
+			break;
+		}
+
+		if ((SWITCH_RIGHT == ON) || (SWITCH_LEFT == ON)) {	//スイッチが押されたら抜ける
+			switch_flag = true;
+			break;
+		}
+
+		mouse::set_distance_m(0);
+
+		//直線の処理
+		if (path::get_path_straight(path_count) == 0) {			//直線がない場合
+
+		} else {
+			//次のパスで終了する場合
+			if (!(path::get_path_flag(path_count + 1))) {
+				if (path::get_path_turn_type(path_count) == none) {	//この直線で最後
+					next_velocity = finish_velocity;
+
+				} else {
+					//次のターン速度に合わせる
+					next_velocity = parameter::get_slalom(velocity,
+							path::get_path_turn_muki(path_count), run_mode);
+
+				}
+
+			} else {
+				//次のターン速度に合わせる
+				next_velocity = parameter::get_slalom(velocity,
+						path::get_path_turn_muki(path_count), run_mode);
+			}
+
+			if (naname_flag) {	//ナナメ走行中
+				run::accel_run(path::get_path_straight(path_count),
+						next_velocity, run_mode);
+
+			} else {				//普通の直進
+				run::accel_run(path::get_path_straight(path_count),
+						next_velocity, run_mode);
+			}
+
+		}
+
+		if (mouse::get_fail_flag()) {		//フェイルセーフが掛かっていたら終了
+			break;
+		}
+
+		if ((SWITCH_RIGHT == ON) || (SWITCH_LEFT == ON)) {	//スイッチが押されたら抜ける
+			break;
+		}
+
+		//ターンの処理
+		//TODO まだまだ続くよ！
+
+	}
+
+	//スイッチ押して止めたなら
+	if (switch_flag) {
+		motor::sleep_motor();
+	}
 
 }
 
@@ -444,7 +512,7 @@ unsigned int adachi::count_unknown_wall(unsigned char target_x,
 		unsigned char target_y) {
 	unsigned int unknown_count = 0;
 
-	//各方向について探索済みか調べる.未探索ならカウントアップ
+//各方向について探索済みか調べる.未探索ならカウントアップ
 	if ((map::check_exist(target_x, target_y, MUKI_RIGHT)) == FALSE) {
 		unknown_count++;
 	}
@@ -462,7 +530,7 @@ unsigned int adachi::count_unknown_wall(unsigned char target_x,
 }
 
 void adachi::run_next_action(ACTION_TYPE next_action) {
-	//TODO 超信地になってる。いつかスラロームになおすこと
+//TODO 超信地になってる。いつかスラロームになおすこと
 	switch (next_action) {
 	case go_straight:
 		//1区間直進
@@ -561,7 +629,7 @@ ACTION_TYPE adachi::get_next_action(DIRECTION next_direction) {
 		break;
 	}
 
-	//ここにたどり着くのは、次行く方向がないか、予期せぬ例外なので、マウスを止める。
+//ここにたどり着くのは、次行く方向がないか、予期せぬ例外なので、マウスを止める。
 	return stop;
 }
 

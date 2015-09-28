@@ -93,7 +93,7 @@ public:
 	static void slalom_for_path(const signed char right_or_left, const unsigned char select_mode);
 	static void spin_turn(const float target_degree);
 
-	static void path(const unsigned char run_mode);
+	static void path(const float finish_velocity, const unsigned char run_mode);
 
 	~run();
 
