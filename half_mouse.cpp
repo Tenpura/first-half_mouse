@@ -109,11 +109,10 @@ void main(void) {
 	myprintf("V_dd = %f\n\r", get_battery());
 	myprintf("\n\n\n");
 
+
 	if (get_battery() < 7.4) {
 		error();
 	}
-
-	wait_ms(1000);
 
 	my7seg::light(1);
 	gyro::set_gyro_ref();
@@ -128,6 +127,7 @@ void main(void) {
 				photo::get_ad(left), photo::get_ad(front_right),
 				photo::get_ad(front_left));
 		wait_ms(100);
+
 
 	}
 
@@ -151,6 +151,7 @@ void main(void) {
 
 	control::start_wall_control();
 	run::accel_run(0.18 * 10, 0, 0);
+	//run::spin_turn(360);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
@@ -192,7 +193,7 @@ void interrupt_cmt0() {
 	control::fail_safe();
 
 	//int_log::put_log((int) (encoder::get_encoder_left() * 1000));
-	float_log::put_log(photo::get_ad(right));
+	float_log::put_log(photo::get_ad(left));
 
 }
 

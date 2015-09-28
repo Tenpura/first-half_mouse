@@ -146,11 +146,11 @@ void mouse::set_direction(const signed char direction_x,
 	}
 }
 
-bool mouse::get_fail_flag(){
+bool mouse::get_fail_flag() {
 	return fail_flag;
 }
 
-void mouse::set_fail_flag(bool set_flag){
+void mouse::set_fail_flag(bool set_flag) {
 	fail_flag = set_flag;
 }
 
@@ -163,7 +163,7 @@ void mouse::cal_accel() {
 }
 
 void mouse::cal_distance() {
-	run_distance += get_ideal_velocity() / 1000;
+	run_distance += encoder::get_velocity() / 1000;
 }
 
 mouse::mouse() {
@@ -292,8 +292,8 @@ void run::slalom_for_path(const signed char right_or_left,
 }
 
 void run::spin_turn(const float target_degree) {
-	const static float max_angular_velocity = 2.0;	//rad/s
-	float angular_acceleration = 2.0;				//rad/s^2
+	const static float max_angular_velocity = 4.0;	//rad/s
+	float angular_acceleration = 3.0;				//rad/s^2
 	float angle_degree = 0;
 
 	control::stop_wall_control();
@@ -308,11 +308,10 @@ void run::spin_turn(const float target_degree) {
 
 	//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
-	while (ABS(mouse::get_ideal_angular_velocity()) < max_angular_velocity) {
+	while (ABS(gyro::get_angular_velocity()) < max_angular_velocity) {
 		//減速に必要な角度を計算
 		angle_degree = degree(
-				(mouse::get_ideal_angular_velocity()
-						* mouse::get_ideal_angular_velocity())
+				(encoder::get_velocity() * encoder::get_velocity())
 						/ (2 * angular_acceleration));
 		//減速に必要な角度が残ってなければ抜ける
 		if (angle_degree >= (target_degree - mouse::get_angle_degree())) {
@@ -326,8 +325,7 @@ void run::spin_turn(const float target_degree) {
 	while (1) {
 		//減速に必要な角度を計算
 		angle_degree = degree(
-				(mouse::get_ideal_angular_velocity()
-						* mouse::get_ideal_angular_velocity())
+				(encoder::get_velocity() * encoder::get_velocity())
 						/ (2 * angular_acceleration));
 		//減速に必要な角度が残ってなければ抜ける
 		if (angle_degree >= (target_degree - mouse::get_angle_degree())) {
@@ -339,7 +337,7 @@ void run::spin_turn(const float target_degree) {
 	mouse::set_angular_acceleration(-angular_acceleration);
 	while (ABS(mouse::get_angle_degree()) < ABS(target_degree)) {
 		//この条件付けないと、先に角速度が0になった場合いつまでたってもループを抜けない
-		if (ABS(mouse::get_ideal_angular_velocity()) < 0.02) {
+		if (ABS(gyro::get_angular_velocity()) < 0.02) {
 			mouse::set_angular_acceleration(0);
 		}
 	}
@@ -572,7 +570,7 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 
 	while (adachi_flag) {
 		//フェイルセーフが掛かっていればそこで抜ける
-		if(mouse::get_fail_flag()){
+		if (mouse::get_fail_flag()) {
 			adachi_flag = false;
 			break;
 		}

@@ -384,7 +384,7 @@ signed int photo::right_ad, photo::left_ad, photo::front_right_ad,
 signed int photo::right_ref, photo::left_ref, photo::front_right_ref,
 		photo::front_left_ref;
 
-bool photo::light_flag=false;
+bool photo::light_flag = false;
 
 void photo::switch_led(PHOTO_TYPE sensor_type, unsigned char one_or_zero) {
 	switch (sensor_type) {
@@ -551,6 +551,8 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 void control::cal_delta() {
 	float before_p_delta;
 	float photo_right_delta, photo_left_delta;
+	float right_before, left_before;
+	float right_now, left_now;
 
 	//エンコーダーのΔ計算
 	before_p_delta = encoder_delta.P;	//積分用
@@ -560,30 +562,52 @@ void control::cal_delta() {
 
 	//センサーのΔ計算
 	before_p_delta = photo_delta.P;
+	left_now = photo::get_ad(left);
+	right_now = photo::get_ad(right);
 
 	//速度が低いと制御が効きすぎるので（相対的に制御が大きくなる）、切る
-	if (mouse::get_ideal_velocity() <= (SEARCH_VELOCITY * 0.5)) {
+	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.5)) {
 		photo_left_delta = 0;
 		photo_right_delta = 0;
 
 	} else {
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
-			photo_right_delta = -(parameter::get_ideal_photo(right)
-					- photo::get_ad(right));
+			//壁の切れ目に吸い込まれないように
+			if (ABS(right_now - right_before) > 20000) {
+				my7seg::light(4);
+				photo_right_delta = 0;
+			} else {
+				photo_right_delta = (parameter::get_ideal_photo(right)
+						- right_now);
+			}
+
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
-				photo_left_delta = (parameter::get_ideal_photo(left)
-						- photo::get_ad(left));
+				//壁の切れ目に吸い込まれないように
+				if (ABS(left_now - left_before) > 20000) {
+					my7seg::light(4);
+					photo_left_delta = 0;
+				} else {
+					photo_left_delta = (parameter::get_ideal_photo(left)
+							- left_now);
+				}
 			} else {
 				//片方のときは、壁のある方を2倍かけることで疑似的に両壁アリと同じ制御量にする
 				photo_left_delta = 0;
-				photo_right_delta = (2 * photo_right_delta);
+				photo_right_delta = 2 * photo_right_delta;
+
 			}
 		} else {			//右がない
 			photo_right_delta = 0;
+
 			if (photo::check_wall(MUKI_LEFT)) {		//左だけある
-				photo_left_delta = 2
-						* (parameter::get_ideal_photo(left)
-								- photo::get_ad(left));
+				//壁の切れ目に吸い込まれないように
+				if (ABS(left_now - left_before) > 20000) {
+					my7seg::light(4);
+					photo_left_delta = 0;
+				} else {
+					photo_left_delta = 2
+							* (parameter::get_ideal_photo(left) - left_now);
+				}
 			} else {
 				//両方ない
 				photo_left_delta = 0;
@@ -591,16 +615,21 @@ void control::cal_delta() {
 			}
 		}
 	}
-	photo_delta.P = (-photo_right_delta + photo_left_delta);
+
+	//一個前の値を保存
+	right_before = right_now;
+	left_before = left_now;
+
+	photo_delta.P = (photo_left_delta - photo_right_delta);
 	photo_delta.I += (photo_delta.P / 1000.0);
 	//photo_delta.D = (photo_delta.P - before_p_delta) * 1000;
 
-	//ジャイロのΔ計算
+//ジャイロのΔ計算
 	before_p_delta = gyro_delta.P;	//積分用
 	gyro_delta.P = (mouse::get_ideal_angular_velocity()
 			- gyro::get_angular_velocity());
 	gyro_delta.I += (gyro_delta.P / 1000);
-	//gyro_delta.D = (gyro_delta.P - before_p_delta) * 1000;
+//gyro_delta.D = (gyro_delta.P - before_p_delta) * 1000;
 
 }
 
@@ -698,7 +727,7 @@ void control::reset_delta() {
 }
 
 void control::fail_safe() {
-	//TODO 閾値どのくらいかわからない。Gyroも参照すべき？
+//TODO 閾値どのくらいかわからない。Gyroも参照すべき？
 	if (encoder_delta.P > 0.5) {
 		motor::sleep_motor();
 		mouse::set_fail_flag(true);
