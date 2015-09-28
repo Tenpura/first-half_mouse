@@ -551,7 +551,7 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 void control::cal_delta() {
 	float before_p_delta;
 	float photo_right_delta, photo_left_delta;
-	float right_before, left_before;
+	static float right_before, left_before;
 	float right_now, left_now;
 
 	//エンコーダーのΔ計算
@@ -574,26 +574,27 @@ void control::cal_delta() {
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
 			//壁の切れ目に吸い込まれないように
 			if (ABS(right_now - right_before) > 20000) {
-				my7seg::light(4);
 				photo_right_delta = 0;
 			} else {
+				my7seg::light(4);
 				photo_right_delta = (parameter::get_ideal_photo(right)
-						- right_now);
+						- photo::get_ad(right));
 			}
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
 				//壁の切れ目に吸い込まれないように
 				if (ABS(left_now - left_before) > 20000) {
-					my7seg::light(4);
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = (parameter::get_ideal_photo(left)
-							- left_now);
+							- photo::get_ad(left));
 				}
 			} else {
 				//片方のときは、壁のある方を2倍かけることで疑似的に両壁アリと同じ制御量にする
 				photo_left_delta = 0;
-				photo_right_delta = 2 * photo_right_delta;
+				photo_right_delta = 2
+						* (parameter::get_ideal_photo(right)
+								- photo::get_ad(right));
 
 			}
 		} else {			//右がない
@@ -602,11 +603,11 @@ void control::cal_delta() {
 			if (photo::check_wall(MUKI_LEFT)) {		//左だけある
 				//壁の切れ目に吸い込まれないように
 				if (ABS(left_now - left_before) > 20000) {
-					my7seg::light(4);
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = 2
-							* (parameter::get_ideal_photo(left) - left_now);
+							* (parameter::get_ideal_photo(left)
+									- photo::get_ad(left));
 				}
 			} else {
 				//両方ない
