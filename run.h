@@ -31,7 +31,7 @@ private:
 
 	static unsigned long mouse_count_ms;//マウスの時間[msec].基本リセットしない
 
-	static bool fail_flag;		//フェイルセーフがかかるとこのフラグがTRUEに
+	static bool fail_flag;//フェイルセーフがかかるとこのフラグがTRUEに
 
 	static POSITION position;//マウスの位置（座標）
 	static unsigned char mouse_direction;//マウスの向き
@@ -68,13 +68,12 @@ public:
 	static unsigned char get_y_position();
 	static void set_position(const unsigned char x, const unsigned char y);
 
-	static unsigned char get_direction();	//defineされたMUKI_??で返す
-	static void get_direction(signed char *direction_x, signed char *direction_y);		//引数の値をポインタ経由で変更する
+	static unsigned char get_direction();//defineされたMUKI_??で返す
+	static void get_direction(signed char *direction_x, signed char *direction_y);//引数の値をポインタ経由で変更する
 	static void set_direction(const unsigned char muki);
 	static void set_direction(const signed char direction_x, const signed char direction_y);
 
-
-	static bool get_fail_flag();		//フェイルセーフがかかったかどうかの判別用
+	static bool get_fail_flag();//フェイルセーフがかかったかどうかの判別用
 	static void set_fail_flag(bool set_flag);
 
 	static void cal_accel();//加速を行う。速度の加減算
@@ -90,7 +89,7 @@ private:
 
 public:
 	static void accel_run(const float distance_m, const float end_velocity, const unsigned char select_mode);
-	static void slalom_for_path(const signed char right_or_left, const unsigned char select_mode);
+	static void slalom_for_path(const SLALOM_TYPE slalom_type, const signed char right_or_left, const unsigned char select_mode);
 	static void spin_turn(const float target_degree);
 
 	static void path(const float finish_velocity, const unsigned char run_mode);
@@ -115,7 +114,6 @@ private:
 
 	//目標のマスのまだ見てない壁の数を数え上げる
 	static unsigned int count_unknown_wall(unsigned char target_x, unsigned char target_y);
-
 
 	//引数に応じて次の行動をマウスが実行する（実際に動く部分）
 	static void run_next_action(ACTION_TYPE next_action);

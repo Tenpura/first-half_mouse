@@ -15,10 +15,12 @@ const unsigned int parameter::min_wall_photo[2][4] = { { 2800, 3000, 0, 0 }, {
 
 //0番目は探索用
 const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0,
-		SEARCH_VELOCITY, 2.0 }, { 2.0, 2.0, 2.0 }, { 2.0, 2.0, 2.0 } };
+SEARCH_VELOCITY, 2.0 }, { 2.0, 2.0, 2.0 }, { 2.0, 2.0, 2.0 } };
 
-const INIT_SLALOM parameter::right_slalom[RUN_MODE_NUMBER] = { 0 };
-const INIT_SLALOM parameter::left_slalom[RUN_MODE_NUMBER] = { 0 };
+const INIT_SLALOM parameter::right_slalom[slalom_type_count][RUN_MODE_NUMBER] =
+		{ 0 };
+const INIT_SLALOM parameter::left_slalom[slalom_type_count][RUN_MODE_NUMBER] = {
+		0 };
 
 float parameter::get_run_acceleration(const unsigned char select_mode) {
 	if (select_mode >= RUN_MODE_NUMBER) {			//存在しないモードを選択したらエラー
@@ -91,8 +93,9 @@ float parameter::get_run_de_acceleration(const unsigned char select_mode) {
 	return straight_run[select_mode].de_acceleration;
 }
 
-float parameter::get_slalom(const SLALOM_ELEMENT slalom_element,
-		const signed char right_or_left, const unsigned char select_mode) {
+float parameter::get_slalom(const SLALOM_TYPE slalom_type,
+		const SLALOM_ELEMENT slalom_element, const signed char right_or_left,
+		const unsigned char select_mode) {
 
 	if (select_mode >= RUN_MODE_NUMBER) {			//存在しないモードを選択したらエラー
 		error();
@@ -103,57 +106,57 @@ float parameter::get_slalom(const SLALOM_ELEMENT slalom_element,
 	switch (slalom_element) {
 	case velocity:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].velocity;
+			return right_slalom[slalom_type][select_mode].velocity;
 		} else {
-			return left_slalom[select_mode].velocity;
+			return left_slalom[slalom_type][select_mode].velocity;
 		}
 		break;
 
 	case target_angle:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].target_angle;
+			return right_slalom[slalom_type][select_mode].target_angle;
 		} else {
-			return left_slalom[select_mode].target_angle;
+			return left_slalom[slalom_type][select_mode].target_angle;
 		}
 		break;
 
 	case clothoid_angle:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].clothoid_angle;
+			return right_slalom[slalom_type][select_mode].clothoid_angle;
 		} else {
-			return left_slalom[select_mode].clothoid_angle;
+			return left_slalom[slalom_type][select_mode].clothoid_angle;
 		}
 		break;
 
 	case before_distance:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].before_distance;
+			return right_slalom[slalom_type][select_mode].before_distance;
 		} else {
-			return left_slalom[select_mode].before_distance;
+			return left_slalom[slalom_type][select_mode].before_distance;
 		}
 		break;
 
 	case after_distance:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].after_distance;
+			return right_slalom[slalom_type][select_mode].after_distance;
 		} else {
-			return left_slalom[select_mode].after_distance;
+			return left_slalom[slalom_type][select_mode].after_distance;
 		}
 		break;
 
 	case angular_accel:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].angular_accel;
+			return right_slalom[slalom_type][select_mode].angular_accel;
 		} else {
-			return left_slalom[select_mode].angular_accel;
+			return left_slalom[slalom_type][select_mode].angular_accel;
 		}
 		break;
 
 	case time:
 		if (right_or_left == MUKI_RIGHT) {
-			return right_slalom[select_mode].time;
+			return right_slalom[slalom_type][select_mode].time;
 		} else {
-			return left_slalom[select_mode].time;
+			return left_slalom[slalom_type][select_mode].time;
 		}
 		break;
 	}

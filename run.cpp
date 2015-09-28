@@ -235,14 +235,15 @@ void run::accel_run(const float distance_m, const float end_velocity,
 }
 
 //TODO 実装テストはまだ。とりあえず書いただけ
-void run::slalom_for_path(const signed char right_or_left,
-		const unsigned char select_mode) {
-	float distance = parameter::get_slalom(before_distance, right_or_left,
-			select_mode);
-	float slalom_velocity = parameter::get_slalom(velocity, right_or_left,
-			select_mode);
+void run::slalom_for_path(const SLALOM_TYPE slalom_type,
+		const signed char right_or_left, const unsigned char select_mode) {
+	float distance = parameter::get_slalom(slalom_type, before_distance,
+			right_or_left, select_mode);
+	float slalom_velocity = parameter::get_slalom(slalom_type, velocity,
+			right_or_left, select_mode);
 	float angular_acceleration = ABS(
-			parameter::get_slalom(angular_accel, right_or_left, select_mode));
+			parameter::get_slalom(slalom_type, angular_accel, right_or_left,
+					select_mode));
 	float angle_degree = 0;
 
 	//前距離の分走る
@@ -259,22 +260,22 @@ void run::slalom_for_path(const signed char right_or_left,
 
 	//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
-	angle_degree = parameter::get_slalom(clothoid_angle, right_or_left,
-			select_mode);
+	angle_degree = parameter::get_slalom(slalom_type, clothoid_angle,
+			right_or_left, select_mode);
 	while (ABS(gyro::get_angle()) < angle_degree) {
 	}
 
 	//等角速度
 	mouse::set_angular_acceleration(0);
-	angle_degree = parameter::get_slalom(target_angle, right_or_left,
-			select_mode) - angle_degree;
+	angle_degree = parameter::get_slalom(slalom_type, target_angle,
+			right_or_left, select_mode) - angle_degree;
 	while (ABS(gyro::get_angle()) < angle_degree) {
 	}
 
 	//角減速区間
 	mouse::set_angular_acceleration(-angular_acceleration);
-	angle_degree = parameter::get_slalom(target_angle, right_or_left,
-			select_mode);
+	angle_degree = parameter::get_slalom(slalom_type, target_angle,
+			right_or_left, select_mode);
 	while (ABS(gyro::get_angle()) < angle_degree) {
 	}
 
@@ -284,7 +285,7 @@ void run::slalom_for_path(const signed char right_or_left,
 	//後ろ距離分走る
 	control::start_wall_control();
 	mouse::set_distance_m(0);
-	distance = parameter::get_slalom(after_distance, right_or_left,
+	distance = parameter::get_slalom(slalom_type, after_distance, right_or_left,
 			select_mode);
 	accel_run(distance, slalom_velocity, select_mode);
 
@@ -379,14 +380,16 @@ void run::path(const float finish_velocity, const unsigned char run_mode) {
 
 				} else {
 					//次のターン速度に合わせる
-					next_velocity = parameter::get_slalom(velocity,
+					next_velocity = parameter::get_slalom(
+							path::get_path_turn_type(path_count), velocity,
 							path::get_path_turn_muki(path_count), run_mode);
 
 				}
 
 			} else {
 				//次のターン速度に合わせる
-				next_velocity = parameter::get_slalom(velocity,
+				next_velocity = parameter::get_slalom(
+						path::get_path_turn_type(path_count), velocity,
 						path::get_path_turn_muki(path_count), run_mode);
 			}
 
@@ -410,7 +413,21 @@ void run::path(const float finish_velocity, const unsigned char run_mode) {
 		}
 
 		//ターンの処理
-		//TODO まだまだ続くよ！
+		run::slalom_for_path(path::get_path_turn_type(path_count),
+				path::get_path_turn_muki(path_count), run_mode);
+
+		switch (path::get_path_turn_type(path_count)) {
+		//ナナメに入るなら
+		case begin_45:
+		case begin_135:
+			naname_flag = true;
+			break;
+		//ナナメから出るなら
+		case end_45:
+		case end_135:
+			naname_flag = false;
+			break;
+		}
 
 	}
 
