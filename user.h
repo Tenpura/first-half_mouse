@@ -25,6 +25,17 @@ void set_count_ms(const unsigned long set_ms_value);		//msをカウントする�
 unsigned long get_count_ms();			//msのカウントを返す。
 unsigned long wait_package(const unsigned char, const unsigned long);//上3つの関数の実態はココ。表からは見えない
 
+//mode選択クラス
+class mode{
+private:
+	mode();
+
+public:
+	//今はスイッチで切替、センサに反応させながらスイッチが決定
+	static unsigned char select_mode(const unsigned char mode_number);		//mode選択し、選んだモード番号を返す
+	~mode();
+};
+
 //logクラス	いつかはtemplateで任意の型に対応させたい…!
 
 class int_log {
