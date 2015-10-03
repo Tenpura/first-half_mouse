@@ -523,7 +523,7 @@ photo::~photo() {
 //XXX 各種ゲイン
 //control関連
 const PID gyro_gain = { 4.5, 27, 0 };
-const PID photo_gain = { 0.0001, 0, 0 };
+const PID photo_gain = { 0.0001, 0.000000005, 0.0 };
 const PID encoder_gain = { 320, 7000, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
@@ -550,7 +550,7 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 
 void control::cal_delta() {
 	float before_p_delta;
-	float photo_right_delta, photo_left_delta;
+	volatile float photo_right_delta = 0, photo_left_delta = 0;
 	static float right_before, left_before;
 	float right_now, left_now;
 
@@ -576,7 +576,6 @@ void control::cal_delta() {
 			if (ABS(right_now - right_before) > 20000) {
 				photo_right_delta = 0;
 			} else {
-				my7seg::light(4);
 				photo_right_delta = (parameter::get_ideal_photo(right)
 						- photo::get_ad(right));
 			}
@@ -621,7 +620,7 @@ void control::cal_delta() {
 	right_before = right_now;
 	left_before = left_now;
 
-	photo_delta.P = (photo_right_delta - photo_left_delta);
+	photo_delta.P = (-photo_right_delta - photo_left_delta);
 	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);
 	//photo_delta.D = (photo_delta.P - before_p_delta) * 1000;
 
@@ -714,22 +713,43 @@ bool control::get_control_phase() {
 	return control_phase;
 }
 
-void control::reset_delta() {
-	gyro_delta.P = 0;
-	gyro_delta.I = 0;
-	gyro_delta.D = 0;
-	photo_delta.P = 0;
-	photo_delta.I = 0;
-	photo_delta.D = 0;
-	encoder_delta.P = 0;
-	encoder_delta.I = 0;
-	encoder_delta.D = 0;
+void control::reset_delta(SEN_TYPE sensor_type) {
+	switch (sensor_type) {
+	case sen_gyro:
+		gyro_delta.P = 0;
+		gyro_delta.I = 0;
+		gyro_delta.D = 0;
+		break;
 
+	case sen_photo:
+		photo_delta.P = 0;
+		photo_delta.I = 0;
+		photo_delta.D = 0;
+		break;
+
+	case sen_encoder:
+		encoder_delta.P = 0;
+		encoder_delta.I = 0;
+		encoder_delta.D = 0;
+		break;
+
+	case sen_all:
+		gyro_delta.P = 0;
+		gyro_delta.I = 0;
+		gyro_delta.D = 0;
+		photo_delta.P = 0;
+		photo_delta.I = 0;
+		photo_delta.D = 0;
+		encoder_delta.P = 0;
+		encoder_delta.I = 0;
+		encoder_delta.D = 0;
+		break;
+	}
 }
 
 void control::fail_safe() {
 //TODO 閾値どのくらいかわからない。Gyroも参照すべき？
-	if (encoder_delta.P > 0.5) {
+	if (ABS(encoder_delta.P) > 0.6) {
 		motor::sleep_motor();
 		mouse::set_fail_flag(true);
 	}

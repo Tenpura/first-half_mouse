@@ -109,7 +109,6 @@ void main(void) {
 	myprintf("V_dd = %f\n\r", get_battery());
 	myprintf("\n\n\n");
 
-
 	if (get_battery() < 7.4) {
 		error();
 	}
@@ -126,8 +125,8 @@ void main(void) {
 		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
 				photo::get_ad(left), photo::get_ad(front_right),
 				photo::get_ad(front_left));
-		wait_ms(100);
 
+		wait_ms(100);
 
 	}
 
@@ -142,16 +141,21 @@ void main(void) {
 	control::start_control();
 	mouse::set_ideal_velocity(0);
 	mouse::set_ideal_angular_velocity(0);
-	control::reset_delta();
+	control::reset_delta(sen_all);
 
 	my7seg::count_down(3, 500);
 
 	float_log.reset_log();
 
+
 	mouse::set_distance_m(0);
 	control::start_wall_control();
-	run::accel_run(0.18 * 10, 0, 0);
-	//run::spin_turn(360);
+
+	run::accel_run(0.18 * 2, 0.7, 1);
+	my7seg::light(2);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 0);
+	//run::spin_turn(90);
+	//run::accel_run(0.18 * 2, 0, 1);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
@@ -192,7 +196,7 @@ void interrupt_cmt0() {
 
 	control::fail_safe();
 
-	//int_log::put_log((int) (encoder::get_encoder_left() * 1000));
+//int_log::put_log((int) (encoder::get_encoder_left() * 1000));
 	float_log::put_log(photo::get_ad(left));
 
 }
@@ -202,7 +206,7 @@ void interrupt_cmt1() {
 	const static int wait_number = 1000;
 	photo::turn_off_all();
 
-	//TODO LEDモード選択で光らないモードを作る！
+//TODO LEDモード選択で光らないモードを作る！
 
 	photo::set_ad(right, false);
 	photo::light(right);

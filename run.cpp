@@ -65,6 +65,7 @@ float mouse::get_ideal_angular_velocity() {
 
 void mouse::reset_angle() {
 	gyro::reset_angle();
+	control::reset_delta(sen_gyro);
 	mouse::reset_count();		//最小二乗法の補正ためカウントをリセット
 }
 
@@ -214,23 +215,36 @@ void run::accel_run(const float distance_m, const float end_velocity,
 	}
 
 	//減速
-	mouse::set_acceleration(-ABS(de_accel_value));
-	while (mouse::get_ideal_velocity() > end_velocity) {
-		//速度より先に距離がなくなったら抜ける
-		if (distance_m < mouse::get_distance_m()) {
-			break;
+	if (encoder::get_velocity() > end_velocity) {
+		mouse::set_acceleration(-ABS(de_accel_value));
+		while (encoder::get_velocity() > end_velocity) {
+			//速度より先に距離がなくなったら抜ける
+			if (distance_m > mouse::get_distance_m()) {
+				break;
+			}
+		}
+
+	} else {
+		mouse::set_acceleration(ABS(de_accel_value));
+		while (encoder::get_velocity() < end_velocity) {
+			//速度より先に距離がなくなったら抜ける
+			if (distance_m > mouse::get_distance_m()) {
+				break;
+			}
 		}
 	}
+
 	mouse::set_acceleration(0);
 	mouse::set_ideal_velocity(end_velocity);
 
 	//速度0だとここに閉じ込められてしまう
 	if (end_velocity > 0) {
 		//もし速度が先に無くなっても、最後まで走りきるよう
-		while (distance_m < mouse::get_distance_m()) {
+		while (distance_m > mouse::get_distance_m()) {
 		}
 	}
 
+	mouse::set_ideal_velocity(end_velocity);
 	mouse::set_distance_m(0);
 }
 
@@ -241,10 +255,10 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 			right_or_left, select_mode);
 	float slalom_velocity = parameter::get_slalom(slalom_type, velocity,
 			right_or_left, select_mode);
-	float angular_acceleration = ABS(
-			parameter::get_slalom(slalom_type, angular_accel, right_or_left,
-					select_mode));
-	float angle_degree = 0;
+	float angular_acceleration = parameter::get_slalom(slalom_type,
+			angular_accel, right_or_left, select_mode);
+	float target_angle_degree = 0;
+	float de_accel_angle = 0;
 
 	//前距離の分走る
 	mouse::set_distance_m(0);
@@ -260,34 +274,47 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 
 	//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
-	angle_degree = parameter::get_slalom(slalom_type, clothoid_angle,
+	target_angle_degree = parameter::get_slalom(slalom_type, clothoid_angle,
 			right_or_left, select_mode);
-	while (ABS(gyro::get_angle()) < angle_degree) {
+	while (ABS(gyro::get_angle()) < target_angle_degree) {
 	}
 
-	//等角速度
+//等角速度
 	mouse::set_angular_acceleration(0);
-	angle_degree = parameter::get_slalom(slalom_type, target_angle,
-			right_or_left, select_mode) - angle_degree;
-	while (ABS(gyro::get_angle()) < angle_degree) {
+	target_angle_degree = (parameter::get_slalom(slalom_type, target_angle,
+			right_or_left, select_mode) - target_angle_degree);
+	while (ABS(gyro::get_angle()) < target_angle_degree) {
 	}
 
-	//角減速区間
+//角減速区間
 	mouse::set_angular_acceleration(-angular_acceleration);
-	angle_degree = parameter::get_slalom(slalom_type, target_angle,
+	target_angle_degree = parameter::get_slalom(slalom_type, target_angle,
 			right_or_left, select_mode);
-	while (ABS(gyro::get_angle()) < angle_degree) {
+	while (ABS(gyro::get_angle()) < target_angle_degree) {
+		my7seg::light(6);
+		if (right_or_left == MUKI_RIGHT) {
+			if (gyro::get_angular_velocity() < 0) {
+				mouse::set_angular_acceleration(0);
+				mouse::set_ideal_angular_velocity(0);
+			}
+		} else {
+			if (gyro::get_angular_velocity() > 0) {
+				mouse::set_angular_acceleration(0);
+				mouse::set_ideal_angular_velocity(0);
+			}
+		}
 	}
 
 	mouse::set_angular_acceleration(0);
 	mouse::set_ideal_angular_velocity(0);
+	mouse::reset_angle();
 
-	//後ろ距離分走る
+//後ろ距離分走る
 	control::start_wall_control();
 	mouse::set_distance_m(0);
 	distance = parameter::get_slalom(slalom_type, after_distance, right_or_left,
 			select_mode);
-	accel_run(distance, slalom_velocity, select_mode);
+	accel_run(distance, slalom_velocity, 1);//FIXME select_mode);
 
 	mouse::set_distance_m(0);
 }
@@ -299,7 +326,7 @@ void run::spin_turn(const float target_degree) {
 
 	control::stop_wall_control();
 
-	//時計回りが正
+//時計回りが正
 	if (target_degree < 0) {
 		angular_acceleration = -ABS(angular_acceleration);
 	}
@@ -307,7 +334,7 @@ void run::spin_turn(const float target_degree) {
 	mouse::reset_angle();
 	mouse::set_ideal_angular_velocity(0);
 
-	//角加速区間
+//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
 	while (ABS(gyro::get_angular_velocity()) < max_angular_velocity) {
 		//減速に必要な角度を計算
@@ -320,7 +347,7 @@ void run::spin_turn(const float target_degree) {
 		}
 	}
 
-	//等角速度区間
+//等角速度区間
 	mouse::set_angular_acceleration(0);
 	angle_degree = target_degree - angle_degree;
 	while (1) {
@@ -334,7 +361,7 @@ void run::spin_turn(const float target_degree) {
 		}
 	}
 
-	//角減速区間
+//角減速区間
 	mouse::set_angular_acceleration(-angular_acceleration);
 	while (ABS(mouse::get_angle_degree()) < ABS(target_degree)) {
 		//この条件付けないと、先に角速度が0になった場合いつまでたってもループを抜けない
@@ -422,7 +449,7 @@ void run::path(const float finish_velocity, const unsigned char run_mode) {
 		case begin_135:
 			naname_flag = true;
 			break;
-		//ナナメから出るなら
+			//ナナメから出るなら
 		case end_45:
 		case end_135:
 			naname_flag = false;
@@ -431,7 +458,7 @@ void run::path(const float finish_velocity, const unsigned char run_mode) {
 
 	}
 
-	//スイッチ押して止めたなら
+//スイッチ押して止めたなら
 	if (switch_flag) {
 		motor::sleep_motor();
 	}

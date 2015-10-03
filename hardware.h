@@ -146,7 +146,7 @@ typedef struct {
 } PID;
 //センサータイプを表す列挙型
 enum SEN_TYPE {
-	sen_gyro = 0, sen_encoder = 1, sen_photo = 2
+	sen_gyro = 0, sen_encoder = 1, sen_photo = 2, sen_all=3
 };
 
 class control {
@@ -181,7 +181,7 @@ public:
 
 	static bool get_control_phase();//姿勢制御がかかっているかを取得。かかっていればtrue
 
-	static void reset_delta();
+	static void reset_delta(SEN_TYPE sensor_type);
 
 	static void fail_safe();//Iゲインが一定以上いったらモーターを止める
 

@@ -178,7 +178,7 @@ typedef enum {
 	end_135 = 7,
 	oblique_90 = 8,
 	spin_turn = 9,
-	slalom_type_count
+	slalom_type_count		//要素数を表す
 } SLALOM_TYPE;
 
 //スラローム用構造体

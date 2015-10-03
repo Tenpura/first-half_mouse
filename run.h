@@ -124,7 +124,7 @@ private:
 	adachi();
 
 public:
-	bool adachi_method(const unsigned char target_x, const unsigned char target_y);
+	static bool adachi_method(const unsigned char target_x, const unsigned char target_y);
 	~adachi();
 
 };
