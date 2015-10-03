@@ -129,4 +129,16 @@ public:
 
 };
 
+class carcuit {
+private:
+	carcuit();
+
+public:
+	static unsigned char run_mode;
+	static void set_run_mode(const unsigned char select_mode);		//パラメータ0は超信地
+	static void run_carcuit(const unsigned char maze_x_size,const unsigned char maze_y_sizeconst, const unsigned char cycle_count);
+
+	~carcuit();
+};
+
 #endif /* RUN_H_ */

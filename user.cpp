@@ -22,7 +22,7 @@ float degree(float radian) {
 }
 
 float radian(float degree) {
-	return ( degree * PI() / 180);
+	return (degree * PI() / 180);
 }
 
 void wait_ms(const unsigned int wait_ms_count) {
@@ -52,6 +52,51 @@ unsigned long wait_package(const unsigned char wait_mode,
 		//何もせず
 	}
 	return count_ms;
+}
+
+unsigned char mode::select_mode(const unsigned char mode_number) {
+	unsigned char select = 0;
+
+	while (1) {
+
+		while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+			if (photo::check_wall(MUKI_LEFT)) {
+				my7seg::blink(select, 200, 1);
+			} else {
+				my7seg::light(select);
+			}
+		}
+		wait_ms(100);	//チャタリング対策
+		if (photo::check_wall(MUKI_LEFT)) {
+			break;
+		}
+
+		my7seg::turn_off();
+
+		select++;
+		if (select >= mode_number) {	//上限に達したら、下限に飛ばす
+			select = 0;
+		}
+
+		while ((SWITCH_RIGHT == ON) || (SWITCH_LEFT == ON)) {	//押されていれば待機
+		}
+		wait_ms(100);	//チャタリング対策
+
+	}
+
+	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+		my7seg::blink(select, 200, 1);
+	}
+	wait_ms(100);	//チャタリング対策
+
+	return select;
+}
+
+mode::mode() {
+}
+
+mode::~mode() {
+
 }
 
 signed int int_log::log_case[2][INT_LOG_COUNT];

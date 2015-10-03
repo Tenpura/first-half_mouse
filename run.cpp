@@ -180,7 +180,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 
 	float max_velocity = parameter::get_run_max_velocity(select_mode);
 	float accel_value = parameter::get_run_acceleration(select_mode);
-	float de_accel_value = parameter::get_run_de_acceleration(select_mode);
+	float de_accel_value = ABS(parameter::get_run_de_acceleration(select_mode));
 
 	float de_accel_distance = ABS(
 			mouse::get_ideal_velocity() * mouse::get_ideal_velocity()
@@ -216,7 +216,6 @@ void run::accel_run(const float distance_m, const float end_velocity,
 
 	//減速
 	if (encoder::get_velocity() > end_velocity) {
-		my7seg::light(4);
 		mouse::set_acceleration(-de_accel_value);
 		while (encoder::get_velocity() > end_velocity) {
 			//速度より先に距離がなくなったら抜ける
@@ -248,7 +247,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 	mouse::set_distance_m(0);
 }
 
-//TODO 実装テストはまだ。とりあえず書いただけ
+
 void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 		const signed char right_or_left, const unsigned char select_mode) {
 	float distance = parameter::get_slalom(slalom_type, before_distance,
@@ -342,6 +341,8 @@ void run::spin_turn(const float target_degree) {
 			break;
 		}
 	}
+
+	my7seg::light(5);
 
 //等角速度区間
 	mouse::set_angular_acceleration(0);
@@ -465,6 +466,103 @@ run::run() {
 }
 
 run::~run() {
+}
+
+unsigned char carcuit::run_mode;
+
+void carcuit::set_run_mode(unsigned char select_mode) {
+	if (select_mode > RUN_MODE_NUMBER) {
+		error();
+		myprintf(
+				"You choice unknow parameter mode %d in carcuit class, set_run_mode function \n\r, ",
+				select_mode);
+	} else {
+		run_mode = select_mode;
+	}
+}
+
+void carcuit::run_carcuit(const unsigned char maze_x_size,
+		const unsigned char maze_y_size, const unsigned char cycle_count) {
+	float slalom_velocity;
+
+	my7seg::turn_off();
+
+	motor::stanby_motor();
+
+	wait_ms(1000);
+
+	control::start_control();
+	mouse::set_ideal_velocity(0);
+	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	my7seg::count_down(3, 500);
+
+	mouse::set_distance_m(0);
+	control::start_wall_control();
+
+	if (run_mode == 0) {		//0のときは超信地でまわる
+
+		for (int i = 0; i < cycle_count; i++) {
+			run::accel_run(0.18 * (maze_y_size - 1), 0, run_mode);
+			run::spin_turn(90);
+
+			run::accel_run(0.18 * (maze_x_size - 1), 0, run_mode);
+			run::spin_turn(90);
+
+			run::accel_run(0.18 * (maze_y_size - 1), 0, run_mode);
+			run::spin_turn(90);
+
+			run::accel_run(0.18 * (maze_x_size - 1), 0, run_mode);
+			run::spin_turn(90);
+		}
+		run::accel_run(0.18 * 3, 0, run_mode);
+		motor::sleep_motor();
+
+	} else {
+		slalom_velocity = parameter::get_slalom(big_90, velocity, MUKI_RIGHT,
+				run_mode);
+
+		//とりあえず一周する
+
+		//最初の直線は1区間長い
+		run::accel_run(0.18 * (maze_y_size - 2), slalom_velocity, run_mode);
+		run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+		run::accel_run(0.18 * (maze_x_size - 3), slalom_velocity, run_mode);
+		run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+		run::accel_run(0.18 * (maze_y_size - 3), slalom_velocity, run_mode);
+		run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+		run::accel_run(0.18 * (maze_x_size - 3), slalom_velocity, run_mode);
+		run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+		for (int i = 1; i < cycle_count; i++) {
+			run::accel_run(0.18 * (maze_y_size - 3), slalom_velocity, run_mode);
+			run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+			run::accel_run(0.18 * (maze_x_size - 3), slalom_velocity, run_mode);
+			run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+			run::accel_run(0.18 * (maze_y_size - 3), slalom_velocity, run_mode);
+			run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+
+			run::accel_run(0.18 * (maze_x_size - 3), slalom_velocity, run_mode);
+			run::slalom_for_path(big_90, MUKI_RIGHT, run_mode);
+		}
+
+		run::accel_run(0.18 * 2, slalom_velocity, run_mode);
+		motor::sleep_motor();
+	}
+}
+
+carcuit::carcuit() {
+
+}
+
+carcuit::~carcuit() {
+
 }
 
 signed char adachi::direction_x, adachi::direction_y;

@@ -118,8 +118,6 @@ void main(void) {
 	mouse::reset_angle();
 	my7seg::turn_off();
 
-	myprintf("%f \n\r", gyro::least_square_slope);
-
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 
 		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
@@ -130,52 +128,17 @@ void main(void) {
 
 	}
 
-	my7seg::turn_off();
 
-	motor::stanby_motor();
-
-	wait_ms(1000);
-
-	my7seg::light(4);
-
-	control::start_control();
-	mouse::set_ideal_velocity(0);
-	mouse::set_ideal_angular_velocity(0);
-	control::reset_delta(sen_all);
-
-	my7seg::count_down(3, 500);
-
-	float_log.reset_log();
-
-	mouse::set_distance_m(0);
-	control::start_wall_control();
-
-	float_log.reset_log();
-	run::accel_run(0.18 * 14, 0.7, 1);
-
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 5, 0.7, 1);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 13, 0.7, 1);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 5, 0.7, 1);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-
-	run::accel_run(0.18 * 13, 0.7, 1);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 5, 0.7, 1);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 13, 0.7, 1);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 5, 0.7, 1);
-
-	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
-	run::accel_run(0.18 * 2, 0.7, 1);
-
-	motor::sleep_motor();
+	char select_mode = mode::select_mode(6);
+	carcuit::set_run_mode(select_mode);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+		my7seg::light(select_mode);
 	}
+	my7seg::turn_off;
+	wait_ms(1000);
+
+	carcuit::run_carcuit(16, 16, 2);
 
 	motor::sleep_motor();
 

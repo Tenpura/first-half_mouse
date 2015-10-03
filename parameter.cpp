@@ -15,13 +15,18 @@ const unsigned int parameter::min_wall_photo[2][4] = { { 28001, 3100, 0, 0 }, {
 
 //0番目は探索用
 const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0,
-SEARCH_VELOCITY, 2.0 }, { 2.0, 1.0, 2.0 }, { 2.0, 2.0, 2.0 } };
+SEARCH_VELOCITY, 2.0 }, { 2.0, 1.0, 2.0 }, { 2.0, 1.5, 2.0 }, { 2.0, 2.0, 2.0 },
+		{ 3.0, 2.0, 3.0 } };
 
 //velocity,target_angle,clotoid_angle,before,after,angular_accel,time
 const INIT_SLALOM parameter::right_slalom[slalom_type_count][RUN_MODE_NUMBER] =
 		{ { { 0 } },	//none
 				{ { 0.5, 90, 30, 0, 0, 3, 0 } },	//small
-				{ { 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }	//big_90
+
+				{ { 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }, { 0.7, 90, 30,
+						0.12, 0.04, 36.5, 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5,
+						0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }	//big_90
+
 				} };
 const INIT_SLALOM parameter::left_slalom[slalom_type_count][RUN_MODE_NUMBER] = {
 		0 };
