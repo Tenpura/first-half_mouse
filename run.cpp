@@ -188,7 +188,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 
 	//加速
 	mouse::set_acceleration(ABS(parameter::get_run_acceleration(select_mode)));
-	while (mouse::get_ideal_velocity() < max_velocity) {
+	while (encoder::get_velocity() < max_velocity) {
 		//現在速度から減速にかかる距離を計算
 		de_accel_distance = ABS(
 				mouse::get_ideal_velocity() * mouse::get_ideal_velocity()
@@ -209,17 +209,18 @@ void run::accel_run(const float distance_m, const float end_velocity,
 				- end_velocity * end_velocity) / (2 * de_accel_value);
 
 		//減速に距離が必要な距離が足りなくなったら抜ける
-		if (de_accel_distance >= distance_m - mouse::get_distance_m()) {
+		if (de_accel_distance >= (distance_m - mouse::get_distance_m())) {
 			break;
 		}
 	}
 
 	//減速
 	if (encoder::get_velocity() > end_velocity) {
-		mouse::set_acceleration(-ABS(de_accel_value));
+		my7seg::light(4);
+		mouse::set_acceleration(-de_accel_value);
 		while (encoder::get_velocity() > end_velocity) {
 			//速度より先に距離がなくなったら抜ける
-			if (distance_m > mouse::get_distance_m()) {
+			if (distance_m < mouse::get_distance_m()) {
 				break;
 			}
 		}
@@ -228,7 +229,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 		mouse::set_acceleration(ABS(de_accel_value));
 		while (encoder::get_velocity() < end_velocity) {
 			//速度より先に距離がなくなったら抜ける
-			if (distance_m > mouse::get_distance_m()) {
+			if (distance_m < mouse::get_distance_m()) {
 				break;
 			}
 		}
@@ -244,7 +245,6 @@ void run::accel_run(const float distance_m, const float end_velocity,
 		}
 	}
 
-	mouse::set_ideal_velocity(end_velocity);
 	mouse::set_distance_m(0);
 }
 
@@ -257,7 +257,11 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 			right_or_left, select_mode);
 	float angular_acceleration = parameter::get_slalom(slalom_type,
 			angular_accel, right_or_left, select_mode);
-	float target_angle_degree = 0;
+	float target_angle_degree = parameter::get_slalom(slalom_type, target_angle,
+			right_or_left, select_mode);
+	float clothoid_angle_degree = parameter::get_slalom(slalom_type,
+			clothoid_angle, right_or_left, select_mode);
+
 	float de_accel_angle = 0;
 
 	//前距離の分走る
@@ -274,24 +278,18 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 
 	//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
-	target_angle_degree = parameter::get_slalom(slalom_type, clothoid_angle,
-			right_or_left, select_mode);
-	while (ABS(gyro::get_angle()) < target_angle_degree) {
+	while (ABS(gyro::get_angle()) < clothoid_angle_degree) {
 	}
 
 //等角速度
 	mouse::set_angular_acceleration(0);
-	target_angle_degree = (parameter::get_slalom(slalom_type, target_angle,
-			right_or_left, select_mode) - target_angle_degree);
-	while (ABS(gyro::get_angle()) < target_angle_degree) {
+	while (ABS(gyro::get_angle())
+			< (target_angle_degree - clothoid_angle_degree)) {
 	}
 
 //角減速区間
 	mouse::set_angular_acceleration(-angular_acceleration);
-	target_angle_degree = parameter::get_slalom(slalom_type, target_angle,
-			right_or_left, select_mode);
 	while (ABS(gyro::get_angle()) < target_angle_degree) {
-		my7seg::light(6);
 		if (right_or_left == MUKI_RIGHT) {
 			if (gyro::get_angular_velocity() < 0) {
 				mouse::set_angular_acceleration(0);
@@ -314,9 +312,7 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 	mouse::set_distance_m(0);
 	distance = parameter::get_slalom(slalom_type, after_distance, right_or_left,
 			select_mode);
-	accel_run(distance, slalom_velocity, 1);//FIXME select_mode);
-
-	mouse::set_distance_m(0);
+	accel_run(distance, slalom_velocity, select_mode);
 }
 
 void run::spin_turn(const float target_degree) {

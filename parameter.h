@@ -11,7 +11,7 @@
 #include"define.h"
 
 //パラメータ
-#define TIRE_R	11.7		//タイヤの半径[mm]
+#define TIRE_R	12.4		//タイヤの半径[mm]
 #define TREAD_W	44		//トレッド幅[mm]
 
 #define MOVING_AVERAGE		5						//encoderでいくつの移動平均をとるか

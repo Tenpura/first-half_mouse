@@ -523,8 +523,8 @@ photo::~photo() {
 //XXX 各種ゲイン
 //control関連
 const PID gyro_gain = { 4.5, 27, 0 };
-const PID photo_gain = { 0.0001, 0.000000005, 0.0 };
-const PID encoder_gain = { 320, 7000, 0 };
+const PID photo_gain = { 0.00001, 0, 0.0 };
+const PID encoder_gain = { 320, 7200, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
 bool control::control_phase = false;
@@ -566,7 +566,7 @@ void control::cal_delta() {
 	right_now = photo::get_ad(right);
 
 	//速度が低いと制御が効きすぎるので（相対的に制御が大きくなる）、切る
-	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.5)) {
+	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.8)) {
 		photo_left_delta = 0;
 		photo_right_delta = 0;
 

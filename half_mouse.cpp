@@ -147,15 +147,32 @@ void main(void) {
 
 	float_log.reset_log();
 
-
 	mouse::set_distance_m(0);
 	control::start_wall_control();
 
+	float_log.reset_log();
+	run::accel_run(0.18 * 14, 0.7, 1);
+
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+	run::accel_run(0.18 * 5, 0.7, 1);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+	run::accel_run(0.18 * 13, 0.7, 1);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+	run::accel_run(0.18 * 5, 0.7, 1);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+
+	run::accel_run(0.18 * 13, 0.7, 1);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+	run::accel_run(0.18 * 5, 0.7, 1);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+	run::accel_run(0.18 * 13, 0.7, 1);
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
+	run::accel_run(0.18 * 5, 0.7, 1);
+
+	run::slalom_for_path(big_90, MUKI_RIGHT, 1);
 	run::accel_run(0.18 * 2, 0.7, 1);
-	my7seg::light(2);
-	run::slalom_for_path(big_90, MUKI_RIGHT, 0);
-	//run::spin_turn(90);
-	//run::accel_run(0.18 * 2, 0, 1);
+
+	motor::sleep_motor();
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
