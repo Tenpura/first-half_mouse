@@ -247,7 +247,6 @@ void run::accel_run(const float distance_m, const float end_velocity,
 	mouse::set_distance_m(0);
 }
 
-
 void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 		const signed char right_or_left, const unsigned char select_mode) {
 	float distance = parameter::get_slalom(slalom_type, before_distance,
@@ -778,6 +777,22 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 	unsigned char max_unknown_count, target_unknown_count;		//未探索の壁の数を管理
 	ACTION_TYPE next_action;	//次の行動を管理
 
+	my7seg::turn_off();
+
+	motor::stanby_motor();
+
+	wait_ms(1000);
+
+	control::start_control();
+	mouse::set_ideal_velocity(0);
+	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	my7seg::count_down(3, 500);
+
+	mouse::set_distance_m(0);
+	control::start_wall_control();
+
 	while (adachi_flag) {
 		//フェイルセーフが掛かっていればそこで抜ける
 		if (mouse::get_fail_flag()) {
@@ -814,6 +829,7 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 
 		//目標の座標にたどり着いたら終了
 		if ((now_x == target_x) && (now_y == target_y)) {
+			run_next_action(stop);
 			break;
 		}
 
@@ -893,11 +909,13 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 
 	if (adachi_flag) {
 		return true;		//足立法完了!!
+
 	} else {
 		//ここに来るということは足立法が失敗してる
 		motor::sleep_motor();
 		//TODO わかりやすい何かが欲しい
-		my7seg::light(4);
+		error();
+		myprintf("Adachi method failed!\n\r");
 	}
 
 	return false;

@@ -60,14 +60,14 @@ unsigned char mode::select_mode(const unsigned char mode_number) {
 	while (1) {
 
 		while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-			if (photo::check_wall(MUKI_LEFT)) {
+			if (photo::check_wall(MUKI_RIGHT)) {
 				my7seg::blink(select, 200, 1);
 			} else {
 				my7seg::light(select);
 			}
 		}
 		wait_ms(100);	//チャタリング対策
-		if (photo::check_wall(MUKI_LEFT)) {
+		if (photo::check_wall(MUKI_RIGHT)) {
 			break;
 		}
 

@@ -128,7 +128,6 @@ void main(void) {
 
 	}
 
-
 	char select_mode = mode::select_mode(6);
 	carcuit::set_run_mode(select_mode);
 
@@ -138,7 +137,22 @@ void main(void) {
 	my7seg::turn_off;
 	wait_ms(1000);
 
-	carcuit::run_carcuit(16, 16, 2);
+	motor::stanby_motor();
+
+	wait_ms(1000);
+
+	control::start_control();
+	mouse::set_ideal_velocity(0);
+	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	my7seg::count_down(3, 500);
+
+	mouse::set_distance_m(0);
+	control::start_wall_control();
+
+	float_log.reset_log();
+	run::accel_run(0.18 * 15, 0, select_mode);
 
 	motor::sleep_motor();
 
@@ -177,7 +191,7 @@ void interrupt_cmt0() {
 	control::fail_safe();
 
 //int_log::put_log((int) (encoder::get_encoder_left() * 1000));
-	float_log::put_log(photo::get_ad(left));
+	float_log::put_log((float)photo::get_ad(right));
 
 }
 
@@ -203,7 +217,7 @@ void interrupt_cmt1() {
 	photo::turn_off(left);
 
 	photo::set_ad(front_right, false);
-	photo::light(front_right);
+	//FIXME photo::light(front_right);
 	for (int i = 0; i < wait_number; i++) {
 	}
 	photo::set_ad(front_right, true);

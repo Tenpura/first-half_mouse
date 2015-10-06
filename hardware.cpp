@@ -523,7 +523,7 @@ photo::~photo() {
 //XXX 各種ゲイン
 //control関連
 const PID gyro_gain = { 4.5, 27, 0 };
-const PID photo_gain = { 0.00001, 0, 0.0 };
+const PID photo_gain = { 0.00000001, 0, 0.0 };
 const PID encoder_gain = { 320, 7200, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
@@ -542,7 +542,7 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 				+ encoder_delta.D * encoder_gain.D);
 
 	case sen_photo:
-		return (photo_delta.P * photo_gain.P + photo_delta.I * photo_gain.I
+		return ((float)photo_delta.P * photo_gain.P + photo_delta.I * photo_gain.I
 				+ photo_delta.D * photo_gain.D);
 	}
 	return 0;
@@ -563,7 +563,7 @@ void control::cal_delta() {
 	//センサーのΔ計算
 	before_p_delta = photo_delta.P;
 	left_now = photo::get_ad(left);
-	right_now = photo::get_ad(right);
+	right_now = (float)photo::get_ad(right);
 
 	//速度が低いと制御が効きすぎるので（相対的に制御が大きくなる）、切る
 	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.8)) {
@@ -571,14 +571,17 @@ void control::cal_delta() {
 		photo_right_delta = 0;
 
 	} else {
+
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
 			//壁の切れ目に吸い込まれないように
+			/*
 			if (ABS(right_now - right_before) > 20000) {
 				photo_right_delta = 0;
 			} else {
+			*/
 				photo_right_delta = (parameter::get_ideal_photo(right)
 						- photo::get_ad(right));
-			}
+			//}
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
 				//壁の切れ目に吸い込まれないように
@@ -620,7 +623,7 @@ void control::cal_delta() {
 	right_before = right_now;
 	left_before = left_now;
 
-	photo_delta.P = (-photo_right_delta - photo_left_delta);
+	photo_delta.P = (-photo_right_delta + photo_left_delta);
 	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);
 	//photo_delta.D = (photo_delta.P - before_p_delta) * 1000;
 
@@ -749,7 +752,7 @@ void control::reset_delta(SEN_TYPE sensor_type) {
 
 void control::fail_safe() {
 //TODO 閾値どのくらいかわからない。Gyroも参照すべき？
-	if (ABS(encoder_delta.P) > 0.6) {
+	if (ABS(encoder_delta.P) > 0.7) {
 		motor::sleep_motor();
 		mouse::set_fail_flag(true);
 	}
