@@ -218,6 +218,8 @@ void gyro::set_least_square_slope() {
 	}
 	least_square_slope += (float) ((LEAST_SQUARE_TIME * xy_sum - x_sum * y_sum)
 			/ (LEAST_SQUARE_TIME * x_square_sum - x_sum * x_sum));
+
+//	least_square_slope *= 1.5;
 }
 
 void gyro::set_gyro_ref() {
@@ -268,8 +270,8 @@ void encoder::cal_encoder() {
 	static float sample_data[MOVING_AVERAGE] = { 0 };	//データを保存しておく配列
 	float sum = 0;
 
-	left_velocity = (MTU2.TCNT - 32762) * ENCODER_CONST * TIRE_R;	//m/s
-	right_velocity = (MTU1.TCNT - 32762) * ENCODER_CONST * TIRE_R;//count*[rad/count]/[sec]*[m]
+	left_velocity = ((MTU2.TCNT - 32762) * ENCODER_CONST * TIRE_R);	//m/s
+	right_velocity = ((MTU1.TCNT - 32762) * ENCODER_CONST * TIRE_R);//count*[rad/count]/[sec]*[m]
 	MTU1.TCNT = 32762;
 	MTU2.TCNT = 32762;
 
@@ -280,7 +282,7 @@ void encoder::cal_encoder() {
 	sample_data[0] = (right_velocity + left_velocity) / 2;	//配列の最初に入れる
 	sum += sample_data[0];
 
-	velocity = sum / MOVING_AVERAGE;
+	velocity = (sum / MOVING_AVERAGE);
 }
 
 float encoder::get_velocity() {
@@ -522,9 +524,9 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 4.5, 27, 0 };
+const PID gyro_gain = { 5, 70, 0 };
 const PID photo_gain = { 0.00000001, 0, 0.0 };
-const PID encoder_gain = { 320, 7200, 0 };
+const PID encoder_gain = { 150, 5000, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
 bool control::control_phase = false;
@@ -542,8 +544,8 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 				+ encoder_delta.D * encoder_gain.D);
 
 	case sen_photo:
-		return ((float)photo_delta.P * photo_gain.P + photo_delta.I * photo_gain.I
-				+ photo_delta.D * photo_gain.D);
+		return ((float) photo_delta.P * photo_gain.P
+				+ photo_delta.I * photo_gain.I + photo_delta.D * photo_gain.D);
 	}
 	return 0;
 }
@@ -563,7 +565,7 @@ void control::cal_delta() {
 	//センサーのΔ計算
 	before_p_delta = photo_delta.P;
 	left_now = photo::get_ad(left);
-	right_now = (float)photo::get_ad(right);
+	right_now = (float) photo::get_ad(right);
 
 	//速度が低いと制御が効きすぎるので（相対的に制御が大きくなる）、切る
 	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.8)) {
@@ -575,12 +577,12 @@ void control::cal_delta() {
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
 			//壁の切れ目に吸い込まれないように
 			/*
-			if (ABS(right_now - right_before) > 20000) {
-				photo_right_delta = 0;
-			} else {
-			*/
-				photo_right_delta = (parameter::get_ideal_photo(right)
-						- photo::get_ad(right));
+			 if (ABS(right_now - right_before) > 20000) {
+			 photo_right_delta = 0;
+			 } else {
+			 */
+			photo_right_delta = (parameter::get_ideal_photo(right)
+					- photo::get_ad(right));
 			//}
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
@@ -622,6 +624,11 @@ void control::cal_delta() {
 	//一個前の値を保存
 	right_before = right_now;
 	left_before = left_now;
+
+	//XXX ジャイロが少し左に向くので、右向きは強めに制御をかける
+	if (photo_right_delta < 0) {
+		photo_right_delta *= 2;
+	}
 
 	photo_delta.P = (-photo_right_delta + photo_left_delta);
 	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);

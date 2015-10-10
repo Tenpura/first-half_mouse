@@ -64,8 +64,8 @@ float mouse::get_ideal_angular_velocity() {
 }
 
 void mouse::reset_angle() {
-	gyro::reset_angle();
 	control::reset_delta(sen_gyro);
+	gyro::reset_angle();
 	mouse::reset_count();		//最小二乗法の補正ためカウントをリセット
 }
 
@@ -158,10 +158,12 @@ void mouse::set_fail_flag(bool set_flag) {
 
 void mouse::cal_accel() {
 	//（速度+=加速度）を制御にぶち込む
-	set_ideal_velocity(get_ideal_velocity() + get_acceleration() / 1000);
+	set_ideal_velocity(
+			get_ideal_velocity() + (get_acceleration() * CONTROL_PERIOD));
 	//（角速度+=加角速度）を制御にぶち込む
 	set_ideal_angular_velocity(
-			get_ideal_angular_velocity() + get_angular_acceleration() / 1000);
+			get_ideal_angular_velocity()
+					+ (get_angular_acceleration() * CONTROL_PERIOD));
 }
 
 void mouse::cal_distance() {
@@ -186,7 +188,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 			mouse::get_ideal_velocity() * mouse::get_ideal_velocity()
 			- end_velocity * end_velocity) / (2 * de_accel_value);	//減速に必要な距離
 
-	//加速
+//加速
 	mouse::set_acceleration(ABS(parameter::get_run_acceleration(select_mode)));
 	while (encoder::get_velocity() < max_velocity) {
 		//現在速度から減速にかかる距離を計算
@@ -200,7 +202,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 		}
 	}
 
-	//等速
+//等速
 	mouse::set_acceleration(0);
 	while (1) {
 		//現在速度から減速にかかる距離を計算
@@ -214,7 +216,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 		}
 	}
 
-	//減速
+//減速
 	if (encoder::get_velocity() > end_velocity) {
 		mouse::set_acceleration(-de_accel_value);
 		while (encoder::get_velocity() > end_velocity) {
@@ -237,7 +239,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 	mouse::set_acceleration(0);
 	mouse::set_ideal_velocity(end_velocity);
 
-	//速度0だとここに閉じ込められてしまう
+//速度0だとここに閉じ込められてしまう
 	if (end_velocity > 0) {
 		//もし速度が先に無くなっても、最後まで走りきるよう
 		while (distance_m > mouse::get_distance_m()) {
@@ -262,19 +264,19 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 
 	float de_accel_angle = 0;
 
-	//前距離の分走る
+//前距離の分走る
 	mouse::set_distance_m(0);
 	accel_run(distance, slalom_velocity, select_mode);
 
 	control::stop_wall_control();
-	//時計回りが正
+//時計回りが正
 	if (right_or_left == MUKI_LEFT) {
 		angular_acceleration = -ABS(angular_acceleration);
 	}
 	gyro::reset_angle();
 	mouse::set_ideal_angular_velocity(0);
 
-	//角加速区間
+//角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
 	while (ABS(gyro::get_angle()) < clothoid_angle_degree) {
 	}
@@ -314,62 +316,68 @@ void run::slalom_for_path(const SLALOM_TYPE slalom_type,
 }
 
 void run::spin_turn(const float target_degree) {
-	const static float max_angular_velocity = 4.0;	//rad/s
-	float angular_acceleration = 3.0;				//rad/s^2
+	const static float max_angular_velocity = 5.0;	//rad/s
+	float angular_acceleration = 20.0;				//rad/s^2
 	float angle_degree = 0;
 
 	control::stop_wall_control();
+	wait_ms(100);
+	control::stop_control();
 
 //時計回りが正
 	if (target_degree < 0) {
-		angular_acceleration = -ABS(angular_acceleration);
+		angular_acceleration = -(angular_acceleration);
 	}
 
 	mouse::reset_angle();
+	mouse::set_ideal_velocity(0);
 	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	control::start_control();
 
 //角加速区間
 	mouse::set_angular_acceleration(angular_acceleration);
-	while (ABS(gyro::get_angular_velocity()) < max_angular_velocity) {
-		//減速に必要な角度を計算
-		angle_degree = degree(
-				(encoder::get_velocity() * encoder::get_velocity())
-						/ (2 * angular_acceleration));
-		//減速に必要な角度が残ってなければ抜ける
-		if (angle_degree >= (target_degree - mouse::get_angle_degree())) {
-			break;
-		}
-	}
+	angle_degree = degree(
+			(max_angular_velocity * max_angular_velocity)
+					/ (2 * angular_acceleration));
 
-	my7seg::light(5);
+	//三角加速のとき
+	if ((2 * angle_degree) > ABS(target_angle)) {
+		angle_degree = ABS(target_angle / 2);
+	}
+	//最大角速度まで加速
+	while (angle_degree > ABS(mouse::get_angle_degree())) {
+	}
 
 //等角速度区間
 	mouse::set_angular_acceleration(0);
-	angle_degree = target_degree - angle_degree;
-	while (1) {
-		//減速に必要な角度を計算
-		angle_degree = degree(
-				(encoder::get_velocity() * encoder::get_velocity())
-						/ (2 * angular_acceleration));
-		//減速に必要な角度が残ってなければ抜ける
-		if (angle_degree >= (target_degree - mouse::get_angle_degree())) {
-			break;
-		}
+	angle_degree = ABS(target_degree) - angle_degree;
+	while (angle_degree > ABS(mouse::get_angle_degree())) {
 	}
 
 //角減速区間
 	mouse::set_angular_acceleration(-angular_acceleration);
 	while (ABS(mouse::get_angle_degree()) < ABS(target_degree)) {
 		//この条件付けないと、先に角速度が0になった場合いつまでたってもループを抜けない
-		if (ABS(gyro::get_angular_velocity()) < 0.02) {
+		if (ABS(gyro::get_angular_velocity()) < 0.05) {
 			mouse::set_angular_acceleration(0);
 		}
 	}
 
 	mouse::set_angular_acceleration(0);
 	mouse::set_ideal_angular_velocity(0);
+
+	wait_ms(100);
+
+	control::stop_control();
+
+	mouse::reset_angle();
+	control::reset_delta(sen_all);
+
 	mouse::set_distance_m(0);
 
+	control::start_control();
 	control::start_wall_control();
 }
 
@@ -493,10 +501,10 @@ void carcuit::run_carcuit(const unsigned char maze_x_size,
 	control::start_control();
 	mouse::set_ideal_velocity(0);
 	mouse::set_ideal_angular_velocity(0);
-	control::reset_delta(sen_all);
 
 	my7seg::count_down(3, 500);
 
+	control::reset_delta(sen_all);
 	mouse::set_distance_m(0);
 	control::start_wall_control();
 
@@ -561,6 +569,81 @@ carcuit::carcuit() {
 }
 
 carcuit::~carcuit() {
+
+}
+
+bool left_hand::run(const unsigned char target_x,
+		const unsigned char target_y) {
+	signed char direction_x, direction_y;
+	unsigned char now_x, now_y;	//座標一時保存用。見易さのため
+	bool left_hand_flag = true;
+
+	my7seg::turn_off();
+
+//初期化
+	control::stop_wall_control();
+	mouse::set_fail_flag(false);
+
+	motor::stanby_motor();
+
+	wait_ms(1000);
+
+	mouse::reset_angle();
+	mouse::set_ideal_velocity(0);
+	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	control::start_control();
+
+	my7seg::count_down(3, 500);
+
+	mouse::set_distance_m(0);
+	control::start_wall_control();
+
+	run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);
+
+	while (left_hand_flag) {
+		//フェイルセーフが掛かっていればそこで抜ける
+		if (mouse::get_fail_flag()) {
+			left_hand_flag = false;
+			break;
+		}
+
+		mouse::set_distance_m(0);
+
+		//壁チェック
+		if (photo::check_wall(MUKI_LEFT)) {
+			if (photo::check_wall(MUKI_UP)) {
+				if (photo::check_wall(MUKI_RIGHT)) {
+					adachi::run_next_action(back);
+
+				} else {
+					adachi::run_next_action(turn_right);
+				}
+			} else {
+				adachi::run_next_action(go_straight);
+			}
+		} else {
+			adachi::run_next_action(turn_left);
+		}
+
+	}
+
+	if (left_hand_flag) {
+		run::accel_run((0.09 / MOUSE_MODE), 0, 0);
+		return true;
+	} else {
+		motor::sleep_motor();
+		return false;
+	}
+
+}
+
+left_hand::left_hand() {
+
+}
+
+left_hand::~left_hand() {
 
 }
 
@@ -672,37 +755,44 @@ void adachi::run_next_action(ACTION_TYPE next_action) {
 	case go_straight:
 		//1区間直進
 		run::accel_run((0.18 / MOUSE_MODE), SEARCH_VELOCITY, 0);
+		return;
 		break;
 
 	case turn_right:
 		//半区間⇒超信地⇒半区間
 		run::accel_run((0.09 / MOUSE_MODE), 0, 0);
+		my7seg::light(2);
 		run::spin_turn(90);
 		run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);
 		direction_turn(&direction_x, &direction_y, MUKI_RIGHT);	//向きを90°変える
+		return;
 		break;
 
 	case turn_left:
 		//半区間⇒超信地⇒半区間
 		run::accel_run((0.09 / MOUSE_MODE), 0, 0);
+		my7seg::light(3);
 		run::spin_turn(-90);
 		run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);
 		direction_turn(&direction_x, &direction_y, MUKI_LEFT);	//向きを90°変える
+		return;
 		break;
 
 	case back:
 		//半区間進んで180°ターンして半区間直進
 		run::accel_run((0.09 / MOUSE_MODE), 0, 0);			//半区間直進
+		my7seg::light(4);
 		run::spin_turn(180);
 		direction_turn(&direction_x, &direction_y, MUKI_RIGHT);	//向きを90°変える
 		direction_turn(&direction_x, &direction_y, MUKI_RIGHT);	//向きを90°変える
 		run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);		//半区間直進
+		return;
 		break;
 
 	case stop:
 		//半区間進んでストップ
 		run::accel_run((0.09 / MOUSE_MODE), 0, 0);			//半区間直進
-		//TODO ここでモーターの電源切るべき？
+		return;
 		break;
 	}
 }
@@ -779,19 +869,26 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 
 	my7seg::turn_off();
 
+	control::stop_wall_control();
+	mouse::set_fail_flag(false);
+
 	motor::stanby_motor();
 
 	wait_ms(1000);
 
-	control::start_control();
+	mouse::reset_angle();
 	mouse::set_ideal_velocity(0);
 	mouse::set_ideal_angular_velocity(0);
 	control::reset_delta(sen_all);
+
+	control::start_control();
 
 	my7seg::count_down(3, 500);
 
 	mouse::set_distance_m(0);
 	control::start_wall_control();
+
+	run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);
 
 	while (adachi_flag) {
 		//フェイルセーフが掛かっていればそこで抜ける
@@ -916,6 +1013,12 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 		//TODO わかりやすい何かが欲しい
 		error();
 		myprintf("Adachi method failed!\n\r");
+		if (mouse::get_fail_flag()) {
+			myprintf("fail safe!\n\r");
+		}
+
+		myprintf("now -> (%d,%d)\n\r", mouse::get_x_position(),
+				mouse::get_y_position());
 	}
 
 	return false;

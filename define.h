@@ -35,7 +35,7 @@
 #define GYRO_SENSITIVITY	0.67		//Gyroの感度[mV・s/degree]
 #define GYRO_CONST			1.4925	//gyroの定数[degree/V/ms]
 
-#define ENCODER_CONST	(1.534 / 1000)			//encoderの分解能[rad/count]
+#define ENCODER_CONST	(1.534 * 0.001)			//encoderの分解能[rad/count]
 
 #define MOTOR_CONST	(222.6)		//モーターの回転定数[回転/s/V]
 

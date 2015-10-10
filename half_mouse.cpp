@@ -73,43 +73,12 @@ void main(void) {
 
 //	sound_melody(dorakue_noroi,-2,300);
 
-	/*
-	 //右のスイッチを押すと7セグが1増加、左で1減少。同時押しでbreak
-	 for (int i = 0;;) {
-	 my7seg(i);	//7セグを光らせる
-
-	 while ((SWITCH_RIGHT == ON) || (SWITCH_LEFT == ON)) {	//押されていれば待機
-	 if ((SWITCH_RIGHT == true) && (SWITCH_LEFT == true)) {	//同時押しだったら
-	 my7seg(-1);		//7セグを消す
-	 break;
-	 }
-	 }
-	 wait_ms(100);	//チャタリング対策
-
-	 while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-	 }
-	 wait_ms(100);	//チャタリング対策
-
-	 if (SWITCH_RIGHT == true) {		//右が押されたら
-	 i--;
-	 if (i < 0) {	//下限に達したら、上限にとばす
-	 i = 9;
-	 }
-	 } else {								//左が押されたら
-	 i++;
-	 if (i > 9) {	//上限に達したら、下限に飛ばす
-	 i = 0;
-	 }
-	 }
-
-	 }
-	 */
 	myprintf("\n\n\n");
 	myprintf("Hello!!\n\r");
 	myprintf("V_dd = %f\n\r", get_battery());
 	myprintf("\n\n\n");
 
-	if (get_battery() < 7.4) {
+	if (get_battery() < 7.6) {
 		error();
 	}
 
@@ -118,8 +87,20 @@ void main(void) {
 	mouse::reset_angle();
 	my7seg::turn_off();
 
-	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+	motor::stanby_motor();
 
+	mouse::reset_angle();
+	mouse::set_ideal_velocity(0);
+	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	control::start_control();
+
+	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+	/*
+	 myprintf("left %f, right %f\n\r", encoder::left_velocity,
+	 encoder::right_velocity);
+	 */
 		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
 				photo::get_ad(left), photo::get_ad(front_right),
 				photo::get_ad(front_left));
@@ -128,34 +109,54 @@ void main(void) {
 
 	}
 
+	motor::sleep_motor();
+
 	char select_mode = mode::select_mode(6);
 	carcuit::set_run_mode(select_mode);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 		my7seg::light(select_mode);
+
 	}
-	my7seg::turn_off;
+
+	my7seg::turn_off();
+
 	wait_ms(1000);
 
 	motor::stanby_motor();
 
-	wait_ms(1000);
-
-	control::start_control();
+	mouse::reset_angle();
 	mouse::set_ideal_velocity(0);
 	mouse::set_ideal_angular_velocity(0);
 	control::reset_delta(sen_all);
 
+	control::start_control();
 	my7seg::count_down(3, 500);
 
-	mouse::set_distance_m(0);
 	control::start_wall_control();
 
 	float_log.reset_log();
-	run::accel_run(0.18 * 15, 0, select_mode);
+
+	mouse::set_distance_m(0);
+
+	while (1) {
+		run::spin_turn(180);
+		run::spin_turn(-180);
+	}
+
+	//run::accel_run(0.18, SEARCH_VELOCITY, 0);
+	run::accel_run(0.18, 0, 0);
+
+	//	run::accel_run(0.18 * 15, 0, select_mode);
+
+	mouse::set_position(0, 0);
+	mouse::set_direction(MUKI_UP);
+
+	//left_hand::run(3,2);
+
+	//adachi::run_next_action(stop);
 
 	motor::sleep_motor();
-
 	wait_ms(1000);
 
 	my7seg::light(8);
@@ -164,7 +165,7 @@ void main(void) {
 	}
 
 	for (int i = 0; i < LOG_COUNT; i++) {
-		myprintf("%f \n\r", float_log.get_log(i));	//,float_log.get_log(i));
+		myprintf("%f \n\r", float_log.get_log(i));
 	}
 
 }
@@ -190,8 +191,7 @@ void interrupt_cmt0() {
 
 	control::fail_safe();
 
-//int_log::put_log((int) (encoder::get_encoder_left() * 1000));
-	float_log::put_log((float)photo::get_ad(right));
+	float_log::put_log(encoder::get_velocity());
 
 }
 
@@ -217,7 +217,7 @@ void interrupt_cmt1() {
 	photo::turn_off(left);
 
 	photo::set_ad(front_right, false);
-	//FIXME photo::light(front_right);
+	photo::light(front_right);
 	for (int i = 0; i < wait_number; i++) {
 	}
 	photo::set_ad(front_right, true);

@@ -8,10 +8,12 @@
 #include"parameter.h"
 //ideal_photo[x][y]	xは0がクラシック,1がハーフ	yが光学センサの向きに対応。
 //right left front_right front_left
-const unsigned int parameter::ideal_photo[2][4] = { { 3300, 2800, 1815, 1100 },
+const unsigned int parameter::ideal_photo[2][4] = { { 2800, 2770, 1950, 1100 },
+//{ { 3350, 2400, 1815, 1100 },
 		{ 100, 100, 100, 100 } };
-const unsigned int parameter::min_wall_photo[2][4] = { { 2000, 1700, 0, 0 }, {
-		0, 0, 0, 0 } };
+const unsigned int parameter::min_wall_photo[2][4] = { { 1830, 2050, 1950, 0 },
+		//{ 2000, 1700, 0, 0 },
+		{0, 0, 0, 0 } };
 
 //0番目は探索用
 const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0,
@@ -22,7 +24,6 @@ SEARCH_VELOCITY, 2.0 }, { 2.0, 1.0, 2.0 }, { 2.0, 1.5, 2.0 }, { 2.0, 2.0, 2.0 },
 const INIT_SLALOM parameter::right_slalom[slalom_type_count][RUN_MODE_NUMBER] =
 		{ { { 0 } },	//none
 				{ { 0.5, 90, 30, 0, 0, 3, 0 } },	//small
-
 				{ { 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }, { 0.7, 90, 30,
 						0.12, 0.04, 36.5, 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5,
 						0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }	//big_90
