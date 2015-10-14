@@ -60,14 +60,14 @@ unsigned char mode::select_mode(const unsigned char mode_number) {
 	while (1) {
 
 		while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-			if (photo::check_wall(MUKI_RIGHT)) {
+			if (photo::check_wall(MUKI_UP)) {
 				my7seg::blink(select, 200, 1);
 			} else {
 				my7seg::light(select);
 			}
 		}
 		wait_ms(100);	//チャタリング対策
-		if (photo::check_wall(MUKI_RIGHT)) {
+		if (photo::check_wall(MUKI_UP)) {
 			break;
 		}
 
@@ -164,6 +164,8 @@ int_log::~int_log() {
 
 float float_log::log_case[LOG_COUNT];
 unsigned int float_log::log_counter;
+float float_log::init_number;
+
 
 void float_log::reset_log() {
 	log_counter = LOG_COUNT;		//リセット中の書き込み対策。

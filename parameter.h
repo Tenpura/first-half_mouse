@@ -11,10 +11,10 @@
 #include"define.h"
 
 //パラメータ
-#define TIRE_R	12.4		//タイヤの半径[mm]
+#define TIRE_R	13.0		//タイヤの半径[mm]
 #define TREAD_W	44		//トレッド幅[mm]
 
-#define MOVING_AVERAGE		5						//encoderでいくつの移動平均をとるか
+#define MOVING_AVERAGE		3						//encoderでいくつの移動平均をとるか
 
 #define LEAST_SQUARE_TIME	2000		//ジャイロの最小二乗法を何ms出かけるか
 

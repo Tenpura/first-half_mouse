@@ -524,9 +524,9 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 5, 70, 0 };
+const PID gyro_gain = { 7, 75, 0 };
 const PID photo_gain = { 0.00000001, 0, 0.0 };
-const PID encoder_gain = { 150, 5000, 0 };
+const PID encoder_gain = { 230, 16000, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
 bool control::control_phase = false;
@@ -551,10 +551,15 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 }
 
 void control::cal_delta() {
+	const static char wall_brake = 10;	//壁の切れ目を判別するための閾値
 	float before_p_delta;
 	volatile float photo_right_delta = 0, photo_left_delta = 0;
 	static float right_before, left_before;
 	float right_now, left_now;
+
+	if (get_control_phase() == false) {			//姿勢制御を掛けないなら計算しない
+		return;
+	}
 
 	//エンコーダーのΔ計算
 	before_p_delta = encoder_delta.P;	//積分用
@@ -572,22 +577,26 @@ void control::cal_delta() {
 		photo_left_delta = 0;
 		photo_right_delta = 0;
 
+	} else if ((photo::get_ad(front_right)
+			>= parameter::get_ideal_photo(front_right))) {
+		//前壁が近いときは横のセンサが前壁を横壁と誤認する可能性あり
+		photo_left_delta = 0;
+		photo_right_delta = 0;
+
 	} else {
 
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
 			//壁の切れ目に吸い込まれないように
-			/*
-			 if (ABS(right_now - right_before) > 20000) {
-			 photo_right_delta = 0;
-			 } else {
-			 */
-			photo_right_delta = (parameter::get_ideal_photo(right)
-					- photo::get_ad(right));
-			//}
+			if (ABS(right_now - right_before) > wall_brake) {
+				photo_right_delta = 0;
+			} else {
+				photo_right_delta = (parameter::get_ideal_photo(right)
+						- photo::get_ad(right));
+			}
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
 				//壁の切れ目に吸い込まれないように
-				if (ABS(left_now - left_before) > 20000) {
+				if (ABS(left_now - left_before) > wall_brake) {
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = (parameter::get_ideal_photo(left)
@@ -606,7 +615,7 @@ void control::cal_delta() {
 
 			if (photo::check_wall(MUKI_LEFT)) {		//左だけある
 				//壁の切れ目に吸い込まれないように
-				if (ABS(left_now - left_before) > 20000) {
+				if (ABS(left_now - left_before) > wall_brake) {
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = 2
@@ -639,7 +648,7 @@ void control::cal_delta() {
 	gyro_delta.P = (mouse::get_ideal_angular_velocity()
 			- gyro::get_angular_velocity());
 	gyro_delta.I += (gyro_delta.P * CONTROL_PERIOD);
-//gyro_delta.D = (gyro_delta.P - before_p_delta) * 1000;
+	//gyro_delta.D = (gyro_delta.P - before_p_delta) * 1000;
 
 }
 
@@ -699,7 +708,7 @@ float control::get_feedforward(const signed char right_or_left) {
 
 void control::posture_control() {
 	if (get_control_phase()) {			//姿勢制御を掛けるなら
-		if ((FF_SWITCH == OFF) && (FB_SWITCH == OFF)) {		//両方制御を掛けないとき
+		if ((FF_SWITCH == OFF) && (FB_SWITCH == OFF)) {			//両方制御を掛けないとき
 			return;
 		}
 
@@ -717,6 +726,8 @@ void control::posture_control() {
 		motor::set_duty_right((int) duty_r);
 		motor::set_duty_left((int) duty_l);
 	}
+
+	return;
 }
 
 bool control::get_control_phase() {

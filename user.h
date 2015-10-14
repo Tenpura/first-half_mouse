@@ -63,10 +63,10 @@ class float_log {
 private:
 	static float log_case[LOG_COUNT];
 	static unsigned int log_counter;
-	float init_number;
+	static float init_number;
 
 public:
-	void reset_log();		//logの中身を消去。全て0にする。
+	static void reset_log();		//logの中身を消去。全て0にする。
 
 	static void put_log(const float put_number);//logの最後尾に引数を格納。既に埋まっていれば何もしない
 

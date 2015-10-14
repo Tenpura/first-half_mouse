@@ -8,10 +8,9 @@
 #include"parameter.h"
 //ideal_photo[x][y]	xは0がクラシック,1がハーフ	yが光学センサの向きに対応。
 //right left front_right front_left
-const unsigned int parameter::ideal_photo[2][4] = { { 2800, 2770, 1950, 1100 },
-//{ { 3350, 2400, 1815, 1100 },
+const unsigned int parameter::ideal_photo[2][4] = { { 2400, 2700, 1910, 1100 },
 		{ 100, 100, 100, 100 } };
-const unsigned int parameter::min_wall_photo[2][4] = { { 1830, 2050, 1950, 0 },
+const unsigned int parameter::min_wall_photo[2][4] = { { 1830, 1950, 1210, 40000 },
 		//{ 2000, 1700, 0, 0 },
 		{0, 0, 0, 0 } };
 

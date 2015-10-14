@@ -98,22 +98,28 @@ public:
 
 };
 
+//ACTION_TYPE 足立法のとき次に取る行動の種類
+typedef enum {
+	go_straight, turn_right, turn_left, back, stop
+} ACTION_TYPE;
 
-class left_hand{
+
+class left_hand {
 private:
+
 public:
 
+	//引数に応じて次の行動をマウスが実行する（実際に動く部分）区画の中心から中心へ
+	static void run_next_action(ACTION_TYPE next_action);
+
 	static bool run(const unsigned char target_x, const unsigned char target_y);
+	static bool run2(const unsigned char target_x, const unsigned char target_y);
 
 	left_hand();
 	~left_hand();
 
 };
 
-//ACTION_TYPE 足立法のとき次に取る行動の種類
-typedef enum {
-	go_straight, turn_right, turn_left, back, stop
-} ACTION_TYPE;
 
 class adachi {
 private:
@@ -127,7 +133,6 @@ private:
 	//目標のマスのまだ見てない壁の数を数え上げる
 	static unsigned int count_unknown_wall(unsigned char target_x, unsigned char target_y);
 
-
 	//次行く方向を与えると、次に取る行動を返す。優先度は、直進、右ターン、左ターン、バックの順
 	static ACTION_TYPE get_next_action(DIRECTION next_direction);
 
@@ -136,7 +141,6 @@ private:
 public:
 	//引数に応じて次の行動をマウスが実行する（実際に動く部分）
 	static void run_next_action(ACTION_TYPE next_action);
-
 
 	static bool adachi_method(const unsigned char target_x, const unsigned char target_y);
 	~adachi();

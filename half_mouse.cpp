@@ -87,20 +87,23 @@ void main(void) {
 	mouse::reset_angle();
 	my7seg::turn_off();
 
-	motor::stanby_motor();
 
-	mouse::reset_angle();
-	mouse::set_ideal_velocity(0);
-	mouse::set_ideal_angular_velocity(0);
-	control::reset_delta(sen_all);
+	 motor::stanby_motor();
 
-	control::start_control();
+	 mouse::reset_angle();
+	 mouse::set_ideal_velocity(0);
+	 mouse::set_ideal_angular_velocity(0);
+	 control::reset_delta(sen_all);
+
+	 control::start_control();
+
+
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-	/*
-	 myprintf("left %f, right %f\n\r", encoder::left_velocity,
-	 encoder::right_velocity);
-	 */
+		/*
+		 myprintf("left %f, right %f\n\r", encoder::left_velocity,
+		 encoder::right_velocity);
+		 */
 		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
 				photo::get_ad(left), photo::get_ad(front_right),
 				photo::get_ad(front_left));
@@ -121,41 +124,111 @@ void main(void) {
 
 	my7seg::turn_off();
 
-	wait_ms(1000);
+	switch (select_mode) {
+	case 0:
+		mouse::set_fail_flag(false);
 
-	motor::stanby_motor();
+		motor::stanby_motor();
 
-	mouse::reset_angle();
-	mouse::set_ideal_velocity(0);
-	mouse::set_ideal_angular_velocity(0);
-	control::reset_delta(sen_all);
+		mouse::reset_angle();
+		mouse::set_ideal_velocity(0);
+		mouse::set_ideal_angular_velocity(0);
+		control::reset_delta(sen_all);
 
-	control::start_control();
-	my7seg::count_down(3, 500);
+		control::start_control();
+		my7seg::count_down(3, 500);
 
-	control::start_wall_control();
+		control::start_wall_control();
 
-	float_log.reset_log();
+		float_log.reset_log();
 
-	mouse::set_distance_m(0);
+		mouse::set_distance_m(0);
+		run::accel_run(0.18, 0, 0);
 
-	while (1) {
-		run::spin_turn(180);
-		run::spin_turn(-180);
+		break;
+
+	case 1:
+		mouse::set_position(0, 0);
+		mouse::set_direction(MUKI_UP);
+		left_hand::run(3, 2);
+		break;
+
+	case 2:
+		wait_ms(1000);
+
+		mouse::set_fail_flag(false);
+
+		motor::stanby_motor();
+
+		mouse::reset_angle();
+		mouse::set_ideal_velocity(0);
+		mouse::set_ideal_angular_velocity(0);
+		control::reset_delta(sen_all);
+
+		control::start_control();
+		my7seg::count_down(3, 500);
+
+		float_log.reset_log();
+
+		mouse::set_distance_m(0);
+
+		while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+		}
+
+		break;
+
+	case 3:
+	case 4:
+	case 5:
+		wait_ms(1000);
+
+		mouse::set_fail_flag(false);
+
+		motor::stanby_motor();
+
+		mouse::reset_angle();
+		mouse::set_ideal_velocity(0);
+		mouse::set_ideal_angular_velocity(0);
+		control::reset_delta(sen_all);
+
+		control::start_control();
+		my7seg::count_down(3, 500);
+
+		control::start_wall_control();
+
+		float_log.reset_log();
+
+		mouse::set_distance_m(0);
+		run::accel_run(0.18 * 3, 0, 0);
+
 	}
 
-	//run::accel_run(0.18, SEARCH_VELOCITY, 0);
-	run::accel_run(0.18, 0, 0);
+	wait_ms(1000);
+	/*
 
-	//	run::accel_run(0.18 * 15, 0, select_mode);
+	 motor::stanby_motor();
 
-	mouse::set_position(0, 0);
-	mouse::set_direction(MUKI_UP);
+	 mouse::reset_angle();
+	 mouse::set_ideal_velocity(0);
+	 mouse::set_ideal_angular_velocity(0);
+	 control::reset_delta(sen_all);
 
-	//left_hand::run(3,2);
+	 control::start_control();
+	 my7seg::count_down(3, 500);
+
+	 control::start_wall_control();
+
+	 float_log.reset_log();
+
+	 mouse::set_distance_m(0);
+
+	 //run::accel_run(0.18, SEARCH_VELOCITY, 0);
+	 run::accel_run(0.18, 0, 0);
+
+	 //	run::accel_run(0.18 * 15, 0, select_mode);
+	 */
 
 	//adachi::run_next_action(stop);
-
 	motor::sleep_motor();
 	wait_ms(1000);
 
