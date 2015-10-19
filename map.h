@@ -61,10 +61,10 @@ private:
 	static DIRECTION save_direction;				//次に行くマスの方向を保存
 	static unsigned short maze_step[MAZE_SIZE][MAZE_SIZE];
 
-	static void step_reset();
 	static void close_one_dead_end(unsigned char target_x, unsigned char target_y);
 
 public:
+	static void step_reset();
 
 	static void set_step(unsigned char target_x,unsigned char target_y);//target_x,yを基準に歩数マップ作製(等高線)
 	static void set_step_by_known(unsigned char target_x,unsigned char target_y);//見ていない壁は、壁があると見なす

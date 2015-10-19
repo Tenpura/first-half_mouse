@@ -84,10 +84,9 @@ void main(void) {
 
 	my7seg::light(1);
 	gyro::set_gyro_ref();
-	mouse::reset_angle();
 	my7seg::turn_off();
 
-
+	/*
 	 motor::stanby_motor();
 
 	 mouse::reset_angle();
@@ -97,7 +96,7 @@ void main(void) {
 
 	 control::start_control();
 
-
+	 */
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 		/*
@@ -124,6 +123,8 @@ void main(void) {
 
 	my7seg::turn_off();
 
+//	gyro::set_gyro_ref();
+
 	switch (select_mode) {
 	case 0:
 		mouse::set_fail_flag(false);
@@ -143,41 +144,33 @@ void main(void) {
 		float_log.reset_log();
 
 		mouse::set_distance_m(0);
-		run::accel_run(0.18, 0, 0);
+		run::accel_run(0.09, SEARCH_VELOCITY, 0);
 
+		run::slalom_for_path(small,MUKI_RIGHT,0);
+		run::accel_run(0.09, 0, 0);
+		wait_ms(1000);
 		break;
 
 	case 1:
 		mouse::set_position(0, 0);
 		mouse::set_direction(MUKI_UP);
-		left_hand::run(3, 2);
+		left_hand::run2(1, 0);
 		break;
 
 	case 2:
-		wait_ms(1000);
-
-		mouse::set_fail_flag(false);
-
-		motor::stanby_motor();
-
-		mouse::reset_angle();
-		mouse::set_ideal_velocity(0);
-		mouse::set_ideal_angular_velocity(0);
-		control::reset_delta(sen_all);
-
-		control::start_control();
-		my7seg::count_down(3, 500);
-
-		float_log.reset_log();
-
-		mouse::set_distance_m(0);
-
-		while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-		}
-
+		map::reset_wall();
+		mouse::set_position(0, 0);
+		mouse::set_direction(MUKI_UP);
+		adachi::adachi_method(GOAL_x,GOAL_y);
 		break;
 
 	case 3:
+		mouse::set_direction(MUKI_UP);
+		map::create_wall(3, 3, MUKI_UP);
+		map::create_wall(4, 4, MUKI_LEFT);
+		map::create_wall(5, 5, MUKI_RIGHT);
+		map::create_wall(6, 6, MUKI_DOWN);
+		break;
 	case 4:
 	case 5:
 		wait_ms(1000);
@@ -237,9 +230,10 @@ void main(void) {
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
 
-	for (int i = 0; i < LOG_COUNT; i++) {
-		myprintf("%f \n\r", float_log.get_log(i));
-	}
+	 for (int i = 0; i < LOG_COUNT; i++) {
+	 myprintf("%f \n\r", float_log.get_log(i));
+	 }
+
 
 }
 
@@ -264,7 +258,7 @@ void interrupt_cmt0() {
 
 	control::fail_safe();
 
-	float_log::put_log(encoder::get_velocity());
+	float_log::put_log(gyro::get_angular_velocity());
 
 }
 

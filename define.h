@@ -16,8 +16,8 @@
 
 #define MAZE_SIZE	16
 
-#define GOAL_x 0
-#define GOAL_y 1
+#define GOAL_x 1
+#define GOAL_y 0
 
 #define PATH_MAX 200
 
@@ -83,7 +83,6 @@ typedef union {
 	unsigned char all;				//一括
 	struct {
 		unsigned char :4;		//
-		//	unsigned char now	:2;		//現在の方向を管理、この数、save_directionをビットシフトすると現在の向きに対応
 		unsigned char up :1;		//↑	x=0,y=1の方向
 		unsigned char down :1;		//↓	x=0,y=-1の方向
 		unsigned char left :1;		//←	x=-1,y=0の方向

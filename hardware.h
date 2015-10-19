@@ -69,8 +69,6 @@ public:
 
 class encoder {
 private:
-	//FIXME public
-public:
 	static float right_velocity,left_velocity,velocity;
 	encoder();
 

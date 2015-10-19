@@ -8,11 +8,12 @@
 #include"parameter.h"
 //ideal_photo[x][y]	xは0がクラシック,1がハーフ	yが光学センサの向きに対応。
 //right left front_right front_left
-const unsigned int parameter::ideal_photo[2][4] = { { 2400, 2700, 1910, 1100 },
+const unsigned int parameter::ideal_photo[2][4] = { { 2350, 2550, 1710, 1100 },
 		{ 100, 100, 100, 100 } };
-const unsigned int parameter::min_wall_photo[2][4] = { { 1830, 1950, 1210, 40000 },
+const unsigned int parameter::min_wall_photo[2][4] = {
+		{ 1900, 1800, 1200, 40000 },
 		//{ 2000, 1700, 0, 0 },
-		{0, 0, 0, 0 } };
+		{ 0, 0, 0, 0 } };
 
 //0番目は探索用
 const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0,
@@ -22,14 +23,16 @@ SEARCH_VELOCITY, 2.0 }, { 2.0, 1.0, 2.0 }, { 2.0, 1.5, 2.0 }, { 2.0, 2.0, 2.0 },
 //velocity,target_angle,clotoid_angle,before,after,angular_accel,time
 const INIT_SLALOM parameter::right_slalom[slalom_type_count][RUN_MODE_NUMBER] =
 		{ { { 0 } },	//none
-				{ { 0.5, 90, 30, 0, 0, 3, 0 } },	//small
+				{ { SEARCH_VELOCITY, 90, 30, 0.01, 0.01, 92.386, 0 } },	//small
 				{ { 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }, { 0.7, 90, 30,
 						0.12, 0.04, 36.5, 0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5,
 						0 }, { 0.7, 90, 30, 0.12, 0.04, 36.5, 0 }	//big_90
 
 				} };
 const INIT_SLALOM parameter::left_slalom[slalom_type_count][RUN_MODE_NUMBER] = {
-		0 };
+		{ { 0 } },	//none
+		{ { SEARCH_VELOCITY, 90, 30, 0.01, 0.01, 92.386, 0 } },	//small
+		};
 
 float parameter::get_run_acceleration(const unsigned char select_mode) {
 	if (select_mode >= RUN_MODE_NUMBER) {			//存在しないモードを選択したらエラー

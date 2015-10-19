@@ -526,8 +526,8 @@ void map::draw_map() {
 	myprintf("|");	//左端の壁
 	for (tekitou_x = 0; tekitou_x < MAZE_SIZE - 1; tekitou_x++) {
 
-		//myprintf("%3d", step[tekitou_x][tekitou_y]);
-		myprintf("   ");
+		myprintf("%3d", step::get_step(tekitou_x, tekitou_y));
+		//myprintf("   ");
 
 		if ((get_wall(tekitou_x, tekitou_y, MUKI_RIGHT) == TRUE)
 				|| (get_wall(tekitou_x + 1, tekitou_y, MUKI_LEFT) == TRUE)) {//今書いたマスの右の壁があれば壁を書く
@@ -537,8 +537,8 @@ void map::draw_map() {
 		}
 	}
 
-	//myprintf("%3d", step[tekitou_x][tekitou_y]);
-	myprintf("   ");
+	myprintf("%3d", step::get_step(tekitou_x, tekitou_y));
+	//myprintf("   ");
 
 	myprintf("|\n\r");	//右端の壁
 
@@ -559,8 +559,8 @@ void map::draw_map() {
 		myprintf("|");	//左端の壁
 		for (tekitou_x = 0; tekitou_x < MAZE_SIZE - 1; tekitou_x++) {
 
-			//myprintf("%3d", step[tekitou_x][tekitou_y]);
-			myprintf("   ");
+			myprintf("%3d", step::get_step(tekitou_x, tekitou_y));
+			//myprintf("   ");
 
 			if ((get_wall(tekitou_x, tekitou_y, MUKI_RIGHT) == TRUE)
 					|| (get_wall(tekitou_x + 1, tekitou_y, MUKI_LEFT) == TRUE)) {//今書いたマスの右の壁があれば壁を書く
@@ -569,16 +569,18 @@ void map::draw_map() {
 				myprintf(" ");	//なければ壁は書かない
 			}
 		}
-		//myprintf("%3d", step[tekitou_x][tekitou_y]);
-		myprintf("   ");
+		myprintf("%3d", step::get_step(tekitou_x, tekitou_y));
+		//myprintf("   ");
 
 		myprintf("|\n\r");	//右端の壁
 	}
 
 	//下辺
-	for (tekitou_x = 0; tekitou_x < MAZE_SIZE; tekitou_x++)
+	for (tekitou_x = 0; tekitou_x < MAZE_SIZE; tekitou_x++) {
 		myprintf("+---");
+	}
 	myprintf("+\n\r");
+	myprintf("-----finish draw_map-------\n\r");
 
 }
 
@@ -644,13 +646,15 @@ void step::step_reset() {
 
 void step::set_step(unsigned char target_x, unsigned char target_y) {
 	//座標を管理するための配列
-	unsigned char x_coordinate[965] = { 0 };
-	unsigned char y_coordinate[965] = { 0 };
+	//FIXME 265->965 にするとバグる
+	unsigned char x_coordinate[265] = { 0 };
+	unsigned char y_coordinate[265] = { 0 };
 
-	unsigned char x_count = 0, y_count = 0;	//一時的に座標をもっとくよう
-	unsigned char head, tail;		//
+	unsigned char x_count, y_count;	//一時的に座標をもっとくよう
+	unsigned short head, tail;		//
 
 	step_reset();
+
 	maze_step[target_x][target_y] = 0;
 
 	//coordinate  [tail][][][] -> [][][head]
@@ -674,7 +678,7 @@ void step::set_step(unsigned char target_x, unsigned char target_y) {
 			if ((maze_step[x_count - 1][y_count] == STEP_INIT)) {//歩数を入れてない（入ってる歩数がSTEP_INIT）
 				if (map::get_wall(x_count, y_count, MUKI_LEFT) == FALSE) {//元のマスの左壁がないなら
 					maze_step[x_count - 1][y_count] =
-							maze_step[x_count][y_count] + 1;		//歩数を代入
+							(maze_step[x_count][y_count] + 1);		//歩数を代入
 					//この座標を保持
 					x_coordinate[head] = (x_count - 1);
 					y_coordinate[head] = y_count;
@@ -688,7 +692,7 @@ void step::set_step(unsigned char target_x, unsigned char target_y) {
 			if ((maze_step[x_count + 1][y_count] == STEP_INIT)) {//歩数を入れてない（入ってる歩数がSTEP_INIT）
 				if (map::get_wall(x_count, y_count, MUKI_RIGHT) == FALSE) {	//元のマスの右壁がない
 					maze_step[x_count + 1][y_count] =
-							maze_step[x_count][y_count] + 1;	//歩数を代入
+							(maze_step[x_count][y_count] + 1);	//歩数を代入
 					//この座標を保持
 					x_coordinate[head] = (x_count + 1);
 					y_coordinate[head] = y_count;
@@ -702,7 +706,7 @@ void step::set_step(unsigned char target_x, unsigned char target_y) {
 			if ((maze_step[x_count][y_count - 1] == STEP_INIT)) {//歩数を入れてない（入ってる歩数がSTEP_INIT）
 				if (map::get_wall(x_count, y_count, MUKI_DOWN) == FALSE) {//元のマスの下壁がない
 					maze_step[x_count][y_count - 1] =
-							maze_step[x_count][y_count] + 1;	//歩数を代入
+							(maze_step[x_count][y_count] + 1);	//歩数を代入
 					//この座標を保持
 					x_coordinate[head] = x_count;
 					y_coordinate[head] = (y_count - 1);
@@ -716,7 +720,7 @@ void step::set_step(unsigned char target_x, unsigned char target_y) {
 			if ((maze_step[x_count][y_count + 1] == STEP_INIT)) {//歩数を入れてない（入ってる歩数がSTEP_INIT）
 				if (map::get_wall(x_count, y_count, MUKI_UP) == FALSE) {//元のマスの上壁がない
 					maze_step[x_count][y_count + 1] =
-							maze_step[x_count][y_count] + 1;	//歩数を代入
+							(maze_step[x_count][y_count] + 1);	//歩数を代入
 					//この座標を保持
 					x_coordinate[head] = x_count;
 					y_coordinate[head] = (y_count + 1);
@@ -1286,7 +1290,7 @@ void path::create_path() {
 	}
 
 	path_memory[count].element.distance += 1;	//90mm直進を追加	ゴールに入りきるため
-	path_memory[count+1].element.flag = FALSE;		//続行フラグを折っておく
+	path_memory[count + 1].element.flag = FALSE;		//続行フラグを折っておく
 
 }
 
@@ -1309,9 +1313,9 @@ void path::path_reset() {
 
 bool path::get_path_flag(unsigned int index_number) {
 	//pathがあるならtrue,ないならfalseを返す
-	if(path_memory[index_number].element.flag==TRUE){
+	if (path_memory[index_number].element.flag == TRUE) {
 		return true;
-	}else{
+	} else {
 		return false;
 	}
 
@@ -1371,12 +1375,13 @@ void direction_turn(signed char *direction_x, signed char *direction_y,
 		unsigned char direction_turn_muki) {
 	signed char temp_direction_x = (*direction_x);	//他の場所に保存しないと変換途中で参照する羽目になる
 	signed char temp_direction_y = (*direction_y);
+
 	if (direction_turn_muki == MUKI_LEFT) {
-		*direction_x = (temp_direction_x) * 0 + (temp_direction_y) * (-1);//回転行列のθ=90の計算
-		*direction_y = (temp_direction_x) * 1 + (temp_direction_y) * 0;	//回転行列のθ=90の計算
+		*direction_x = -temp_direction_y;	//回転行列のθ=90の計算
+		*direction_y = temp_direction_x;	//回転行列のθ=90の計算
 	} else {
-		*direction_x = (temp_direction_x) * 0 + (temp_direction_y) * 1;	//回転行列のθ=-90の計算
-		*direction_y = (temp_direction_x) * (-1) + (temp_direction_y) * 0;//回転行列のθ=-90の計算
+		*direction_x = temp_direction_y;	//回転行列のθ=-90の計算
+		*direction_y = -temp_direction_x;	//回転行列のθ=-90の計算
 	}
 
 }

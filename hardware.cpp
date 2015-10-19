@@ -227,6 +227,7 @@ void gyro::set_gyro_ref() {
 
 	set_least_square_slope();	//最小二乗法による補正項導出
 	mouse::reset_count();
+	mouse::reset_angle();
 }
 
 void gyro::reset_angle() {
@@ -524,9 +525,9 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 7, 75, 0 };
-const PID photo_gain = { 0.00000001, 0, 0.0 };
-const PID encoder_gain = { 230, 16000, 0 };
+const PID gyro_gain = { 10, 90, 0 };
+const PID photo_gain = { 0.00000001, 0.00000001, 0.0 };
+const PID encoder_gain = { 280, 18000, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
 bool control::control_phase = false;
@@ -551,7 +552,7 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 }
 
 void control::cal_delta() {
-	const static char wall_brake = 10;	//壁の切れ目を判別するための閾値
+	const static char wall_brake = 4;	//壁の切れ目を判別するための閾値
 	float before_p_delta;
 	volatile float photo_right_delta = 0, photo_left_delta = 0;
 	static float right_before, left_before;
@@ -633,11 +634,6 @@ void control::cal_delta() {
 	//一個前の値を保存
 	right_before = right_now;
 	left_before = left_now;
-
-	//XXX ジャイロが少し左に向くので、右向きは強めに制御をかける
-	if (photo_right_delta < 0) {
-		photo_right_delta *= 2;
-	}
 
 	photo_delta.P = (-photo_right_delta + photo_left_delta);
 	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);

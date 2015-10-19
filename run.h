@@ -15,8 +15,11 @@
 
 //position
 typedef union {
-	unsigned char x :4;
-	unsigned char y :4;
+	unsigned char all;
+	struct {
+		unsigned char x :4;
+		unsigned char y :4;
+	} bit;
 } POSITION;
 
 class mouse {
@@ -79,6 +82,10 @@ public:
 	static void cal_accel();//加速を行う。速度の加減算
 	static void cal_distance();//距離計算
 
+	//壁を見て、壁が存在するなら壁を作り、ないなら壊す。見たことも記録
+	//マウスの向きや座標も内部できちんと考える
+	static void look_wall();//壁を見る関数
+
 	~mouse();
 
 };
@@ -103,7 +110,6 @@ typedef enum {
 	go_straight, turn_right, turn_left, back, stop
 } ACTION_TYPE;
 
-
 class left_hand {
 private:
 
@@ -119,7 +125,6 @@ public:
 	~left_hand();
 
 };
-
 
 class adachi {
 private:
