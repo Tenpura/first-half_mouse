@@ -18,7 +18,9 @@
 
 #define LEAST_SQUARE_TIME	2000		//ジャイロの最小二乗法を何ms出かけるか
 
-#define LOG_COUNT 1000	//LOGをいくつとるか。最低1、0にはしないこと
+#define LOG_DIMENSION	2	//何次元配列を用意するか
+#define LOG_COUNT 500	//LOGをいくつとるか。最低1、0にはしないこと
+
 #define INT_LOG_COUNT	1	//Int型のLogをいくつとるか　最低1
 #define MAX_DUTY	70	//motorのduty制限[%]
 

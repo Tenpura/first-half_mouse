@@ -238,7 +238,14 @@ void gyro::reset_angle() {
 
 void gyro::cal_angle() {
 	before_angle = angle;
-	default_angle += (gyro_value - gyro_ref) * GYRO_CONST * LOGIK_V / 4096;
+	//右回りのとき
+	if ((gyro_value - gyro_ref) > 0) {
+		default_angle += (gyro_value - gyro_ref) * GYRO_CONST_RIGHT * LOGIK_V
+				/ 4096;
+	} else {
+		default_angle += (gyro_value - gyro_ref) * GYRO_CONST_LEFT * LOGIK_V
+				/ 4096;
+	}
 	//最小二乗法で補正する
 	angle = default_angle
 			- (least_square_slope * (float) mouse::get_count_ms());
@@ -525,8 +532,8 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 10, 90, 0 };
-const PID photo_gain = { 0.00000001, 0.00000001, 0.0 };
+const PID gyro_gain = { 22, 200, 0 };
+const PID photo_gain = { 0.03, 0.01, 0.0 };
 const PID encoder_gain = { 280, 18000, 0 };
 
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
@@ -552,7 +559,7 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 }
 
 void control::cal_delta() {
-	const static char wall_brake = 4;	//壁の切れ目を判別するための閾値
+	const static char wall_brake = 8;	//壁の切れ目を判別するための閾値
 	float before_p_delta;
 	volatile float photo_right_delta = 0, photo_left_delta = 0;
 	static float right_before, left_before;
@@ -570,11 +577,11 @@ void control::cal_delta() {
 
 	//センサーのΔ計算
 	before_p_delta = photo_delta.P;
-	left_now = photo::get_ad(left);
+	left_now = (float) photo::get_ad(left);
 	right_now = (float) photo::get_ad(right);
 
 	//速度が低いと制御が効きすぎるので（相対的に制御が大きくなる）、切る
-	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.8)) {
+	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.5)) {
 		photo_left_delta = 0;
 		photo_right_delta = 0;
 
@@ -588,27 +595,26 @@ void control::cal_delta() {
 
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
 			//壁の切れ目に吸い込まれないように
-			if (ABS(right_now - right_before) > wall_brake) {
+			if ((right_now - right_before) > wall_brake) {
 				photo_right_delta = 0;
 			} else {
 				photo_right_delta = (parameter::get_ideal_photo(right)
-						- photo::get_ad(right));
+						- right_now);
 			}
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
 				//壁の切れ目に吸い込まれないように
-				if (ABS(left_now - left_before) > wall_brake) {
+				if ((left_now - left_before) > wall_brake) {
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = (parameter::get_ideal_photo(left)
-							- photo::get_ad(left));
+							- left_now);
 				}
 			} else {
 				//片方のときは、壁のある方を2倍かけることで疑似的に両壁アリと同じ制御量にする
 				photo_left_delta = 0;
 				photo_right_delta = 2
-						* (parameter::get_ideal_photo(right)
-								- photo::get_ad(right));
+						* (parameter::get_ideal_photo(right) - right_now);
 
 			}
 		} else {			//右がない
@@ -616,12 +622,11 @@ void control::cal_delta() {
 
 			if (photo::check_wall(MUKI_LEFT)) {		//左だけある
 				//壁の切れ目に吸い込まれないように
-				if (ABS(left_now - left_before) > wall_brake) {
+				if ((left_now - left_before) > wall_brake) {
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = 2
-							* (parameter::get_ideal_photo(left)
-									- photo::get_ad(left));
+							* (parameter::get_ideal_photo(left) - left_now);
 				}
 			} else {
 				//両方ない
@@ -635,7 +640,13 @@ void control::cal_delta() {
 	right_before = right_now;
 	left_before = left_now;
 
-	photo_delta.P = (-photo_right_delta + photo_left_delta);
+	photo_delta.P = (photo_right_delta - photo_left_delta);
+	//FIXME　Pの偏差が-4294967187.5になることがあるっぽい
+	//どちらにしろセンサーの分解能的にこんな大きな値にはなるはずないから、これははじく
+	if (ABS(photo_delta.P) > 40000) {
+		photo_delta.P = 0;
+	}
+
 	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);
 	//photo_delta.D = (photo_delta.P - before_p_delta) * 1000;
 
@@ -654,8 +665,15 @@ float control::control_velocity() {
 
 float control::control_angular_velocity() {
 	if (wall_control_flag) {
+		if (photo_delta.P == 0) {
+			//何もしない
+			//photo_delta.I = 0;
+		} else {
+			gyro_delta.I = 0;
+		}
 		return (cross_delta_gain(sen_gyro) + cross_delta_gain(sen_photo));
 	} else {
+		photo_delta.I = 0;
 		return cross_delta_gain(sen_gyro);
 	}
 }

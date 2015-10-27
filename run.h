@@ -12,6 +12,7 @@
 #include"hardware.h"
 #include"parameter.h"
 #include"map.h"
+#include"user.h"
 
 //position
 typedef union {
@@ -71,6 +72,7 @@ public:
 	static unsigned char get_y_position();
 	static void set_position(const unsigned char x, const unsigned char y);
 
+	static void turn_direction(const unsigned char right_or_left);
 	static unsigned char get_direction();//defineされたMUKI_??で返す
 	static void get_direction(signed char *direction_x, signed char *direction_y);//引数の値をポインタ経由で変更する
 	static void set_direction(const unsigned char muki);
@@ -96,8 +98,9 @@ private:
 
 public:
 	static void accel_run(const float distance_m, const float end_velocity, const unsigned char select_mode);
-	static void slalom_for_path(const SLALOM_TYPE slalom_type, const signed char right_or_left, const unsigned char select_mode);
+	static void slalom(const SLALOM_TYPE slalom_type, const signed char right_or_left, const unsigned char select_mode);
 	static void spin_turn(const float target_degree);
+	static void slalom_by_sin(const SLALOM_TYPE slalom_type, const signed char right_or_left, const unsigned char select_mode);
 
 	static void path(const float finish_velocity, const unsigned char run_mode);
 

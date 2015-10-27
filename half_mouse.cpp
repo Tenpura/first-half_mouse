@@ -86,6 +86,8 @@ void main(void) {
 	gyro::set_gyro_ref();
 	my7seg::turn_off();
 
+	map::reset_wall();
+
 	/*
 	 motor::stanby_motor();
 
@@ -99,21 +101,22 @@ void main(void) {
 	 */
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-		/*
-		 myprintf("left %f, right %f\n\r", encoder::left_velocity,
-		 encoder::right_velocity);
-		 */
-		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
-				photo::get_ad(left), photo::get_ad(front_right),
-				photo::get_ad(front_left));
 
+		myprintf("left %f, right %f\n\r", encoder::left_velocity,
+				encoder::right_velocity);
+
+		/*
+		 myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
+		 photo::get_ad(left), photo::get_ad(front_right),
+		 photo::get_ad(front_left));
+		 */
 		wait_ms(100);
 
 	}
 
 	motor::sleep_motor();
 
-	char select_mode = mode::select_mode(6);
+	char select_mode = mode::select_mode(6, MUKI_UP);
 	carcuit::set_run_mode(select_mode);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
@@ -141,40 +144,25 @@ void main(void) {
 
 		control::start_wall_control();
 
-		float_log.reset_log();
-
 		mouse::set_distance_m(0);
-		run::accel_run(0.09, SEARCH_VELOCITY, 0);
 
-		run::slalom_for_path(small,MUKI_RIGHT,0);
+		run::accel_run(0.09, SEARCH_VELOCITY, 0);
+		float_log.reset_log();
+		run::slalom(small, MUKI_RIGHT, 0);
 		run::accel_run(0.09, 0, 0);
 		wait_ms(1000);
+
 		break;
 
 	case 1:
+		my7seg::turn_off();
+		wait_ms(1000);
 		mouse::set_position(0, 0);
 		mouse::set_direction(MUKI_UP);
-		left_hand::run2(1, 0);
+		mode::search_mode();
 		break;
 
 	case 2:
-		map::reset_wall();
-		mouse::set_position(0, 0);
-		mouse::set_direction(MUKI_UP);
-		adachi::adachi_method(GOAL_x,GOAL_y);
-		break;
-
-	case 3:
-		mouse::set_direction(MUKI_UP);
-		map::create_wall(3, 3, MUKI_UP);
-		map::create_wall(4, 4, MUKI_LEFT);
-		map::create_wall(5, 5, MUKI_RIGHT);
-		map::create_wall(6, 6, MUKI_DOWN);
-		break;
-	case 4:
-	case 5:
-		wait_ms(1000);
-
 		mouse::set_fail_flag(false);
 
 		motor::stanby_motor();
@@ -189,11 +177,58 @@ void main(void) {
 
 		control::start_wall_control();
 
+		mouse::set_distance_m(0);
+
+		my7seg::turn_off();
+		//run::accel_run(0.09, SEARCH_VELOCITY, 0);
+		float_log.reset_log();
+		//run::spin_turn(90);
+		//run::slalom_by_sin(small, MUKI_LEFT, 0);
+		run::accel_run(0.18*5, 0, 0);
+		wait_ms(100);
+		break;
+
+	case 3:
+		for (int i = 0; i < 360; i++) {
+			myprintf("%d -> %f \n\r", i,
+					9.8 * 9.8 * 3 * my_math::sin(3 * 9.8 * i * CONTROL_PERIOD)
+							/ 2);
+			wait_ms(10);
+		}
+		break;
+	case 4:
+		my7seg::count_down(3, 500);
+		motor::stanby_motor();
+		float_log.reset_log();
+		left_hand::run2(3,3);
+		wait_ms(1000);
+		break;
+
+	case 5:
+		wait_ms(1000);
+
+		mouse::set_fail_flag(false);
+
+		motor::stanby_motor();
+
+		mouse::reset_angle();
+		mouse::set_ideal_velocity(0);
+		mouse::set_ideal_angular_velocity(0);
+		control::reset_delta(sen_all);
+
+		control::start_control();
+		my7seg::count_down(3, 500);
+/*
+		while (1) {
+		}
+*/
+		control::start_wall_control();
+
 		float_log.reset_log();
 
 		mouse::set_distance_m(0);
-		run::accel_run(0.18 * 3, 0, 0);
-
+		//run::accel_run(0.18 * 5, 0, 0);
+		run::spin_turn(90);
 	}
 
 	wait_ms(1000);
@@ -230,10 +265,10 @@ void main(void) {
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
 	}
 
-	 for (int i = 0; i < LOG_COUNT; i++) {
-	 myprintf("%f \n\r", float_log.get_log(i));
-	 }
-
+	for (int i = 0; i < LOG_COUNT; i++) {
+		myprintf("%f  %f \n\r", float_log.get_log(0, i),
+				float_log.get_log(1, i));
+	}
 
 }
 
@@ -258,9 +293,10 @@ void interrupt_cmt0() {
 
 	control::fail_safe();
 
-	float_log::put_log(gyro::get_angular_velocity());
+	float_log::put_log(mouse::get_distance_m(),photo::get_ad(right));
+			//gyro::get_angular_velocity(),mouse::get_ideal_angular_velocity());
 
-}
+	}
 
 void interrupt_cmt1() {
 	MSTP( CMT1 ) = 0;		// 　CMT1スタンバイ解除

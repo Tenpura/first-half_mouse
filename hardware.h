@@ -69,6 +69,7 @@ public:
 
 class encoder {
 private:
+public:
 	static float right_velocity,left_velocity,velocity;
 	encoder();
 

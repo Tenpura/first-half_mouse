@@ -49,6 +49,7 @@ public:
 	static void input_map_data(const MAP_DATA* input_data);//外部に保存したデータの入力
 	static void output_map_data(MAP_DATA* const output_data);//外部にデータ出力
 
+
 	map();
 	~map();
 

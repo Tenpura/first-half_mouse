@@ -33,7 +33,8 @@
 #define M_SUM_ORM	5.5		//上2つの合算抵抗[Ω]
 
 #define GYRO_SENSITIVITY	0.67		//Gyroの感度[mV・s/degree]
-#define GYRO_CONST			1.4925	//gyroの定数[degree/V/ms]
+#define GYRO_CONST_RIGHT	1.51		//gyroの定数[degree/V/ms]パラメーターの1つ
+#define GYRO_CONST_LEFT		1.57		//gyroの定数[degree/V/ms]パラメーターの1つ
 
 #define ENCODER_CONST	(1.534 * 0.001)			//encoderの分解能[rad/count]
 
@@ -62,7 +63,7 @@
 #define PI()		3.1415		//π　円周率
 
 #define ABS(x)		((x) < 0 ? -(x) : (x))	//絶対値
-#define	SINGN(x)	((x) < 0 ? -1 : 1 )		//符合
+#define	SIGN(x)	((x) < 0 ? -1 : 1 )		//符合
 #define	MAX(a,b)	((a) > (b) ? (a) : (b))	//最大値
 #define	MIN(a,b)	((a) < (b) ? (a) : (b))	//最小値
 
@@ -199,6 +200,7 @@ typedef enum {
 	before_distance,
 	after_distance,
 	angular_accel,
+	//max_angular_velocity,
 	time
 } SLALOM_ELEMENT;
 
