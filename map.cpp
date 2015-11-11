@@ -369,9 +369,11 @@ void map::create_wall(unsigned char wall_x, unsigned char wall_y,
 				set_x = wall_x - 1;	//必ず右壁を更新するように、座標を変える
 			}
 		}
+
 		if (set_x < MAZE_SIZE) {
 			set_maze_wall(&x_maze_wall[set_y], set_x, TRUE);//x_maze_wall[y]のx番目の右壁に1を代入
 		} else {		//適切でない値が入ってる
+			error();
 			myprintf("\n\r!!!ERROR!!!\n\r");
 			myprintf("存在しないx座標に壁を作ろうとしています\n\r");
 			myprintf("create_wall関数内\n\r");
@@ -390,6 +392,7 @@ void map::create_wall(unsigned char wall_x, unsigned char wall_y,
 		if (set_y < MAZE_SIZE) {
 			set_maze_wall(&y_maze_wall[set_x], set_y, TRUE);//x_maze_wall[y]のx番目の右壁に1を代入
 		} else {		//適切でない値が入ってる
+			error();
 			myprintf("\n\r!!!ERROR!!!\n\r");
 			myprintf("存在しないy座標に壁を作ろうとしています\n\r");
 			myprintf("create_wall関数内\n\r");
@@ -415,6 +418,7 @@ void map::destroy_wall(unsigned char wall_x, unsigned char wall_y,
 		if (set_x < MAZE_SIZE) {
 			set_maze_wall(&x_maze_wall[set_y], set_x, FALSE);//x_maze_wall[y]のx番目の右壁にfalseを代入
 		} else {		//適切でない値が入ってる
+			error();
 			myprintf("\n\r!!!ERROR!!!\n\r");
 			myprintf("存在しないx座標に壁を作ろうとしています\n\r");
 			myprintf("destroy_wall関数内\n\r");
@@ -433,6 +437,7 @@ void map::destroy_wall(unsigned char wall_x, unsigned char wall_y,
 		if (set_y < MAZE_SIZE) {
 			set_maze_wall(&y_maze_wall[set_x], set_y, FALSE);//x_maze_wall[y]のx番目の上壁に1false代入
 		} else {		//適切でない値が入ってる
+			error();
 			myprintf("\n\r!!!ERROR!!!\n\r");
 			myprintf("存在しないy座標に壁を作ろうとしています\n\r");
 			myprintf("destroy_wall関数内\n\r");
@@ -458,6 +463,7 @@ signed char map::get_wall(unsigned char wall_x, unsigned char wall_y,
 		if (target_x < MAZE_SIZE) {
 			return get_maze_wall(x_maze_wall[target_y], target_x);
 		} else {		//適切でない値が入ってる
+			error();
 			myprintf("\n\r!!!ERROR!!!\n\r");
 			myprintf("存在しないx座標の壁を読もうとしています\n\r");
 			myprintf("get_wall関数内\n\r");
@@ -477,6 +483,7 @@ signed char map::get_wall(unsigned char wall_x, unsigned char wall_y,
 		if (target_y < MAZE_SIZE) {
 			return get_maze_wall(y_maze_wall[target_x], target_y);
 		} else {		//適切でない値が入ってる
+			error();
 			myprintf("\n\r!!!ERROR!!!\n\r");
 			myprintf("存在しないy座標の壁を読もうとしています\n\r");
 			myprintf("get_wall関数内\n\r");

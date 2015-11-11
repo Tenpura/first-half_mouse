@@ -51,12 +51,13 @@ public:
 	static float least_square_slope;//補正項の傾き
 
 	static void set_gyro();
-	static unsigned short get_gyro();
+	static float get_gyro();
 	static void set_gyro_ref();
 
 	static void reset_angle();
 	static void cal_angle();//角度計算[°]
 	static float get_angle();
+	static void set_angle(float set_degree);
 
 	static void cal_angular_velocity();//角速度計算[rad/s]
 	static float get_angular_velocity();
@@ -85,7 +86,6 @@ public:
 
 class motor {
 private:
-	static signed char right_duty,left_duty;
 
 	static signed short get_duty_left();	//左モーターのDuty取得
 	static signed short get_duty_right();//右モーターのDuty取得
@@ -93,6 +93,8 @@ private:
 	motor();
 
 public:
+	static signed char right_duty,left_duty;
+
 	static void set_duty_left(const signed char set_duty);//左モーターのDuty決定
 	static void set_duty_right(const signed char set_duty);//右モーターのDuty決定
 
@@ -110,6 +112,7 @@ public:
 
 class photo {
 private:
+	static signed int right_delta, left_delta, front_right_delta, front_left_delta;
 	static signed int right_ad, left_ad, front_right_ad, front_left_ad;
 	static signed int right_ref, left_ref, front_right_ref, front_left_ref;
 	static void switch_led(PHOTO_TYPE sensor_type, unsigned char one_or_zero);
@@ -127,7 +130,8 @@ public:
 	//消えてれば基準値として、光っていればその差分を記録する
 	static void set_ad(PHOTO_TYPE sensor_type, bool on_light);
 
-	static unsigned int get_ad(PHOTO_TYPE sensor_type);
+	static signed int get_ad(PHOTO_TYPE sensor_type);
+	static signed int get_ad_delta(PHOTO_TYPE sensor_type);		//1ms前との差分を返す
 
 	//TODO この関数はマウスclassにあるべきかも
 	static bool check_wall(unsigned char muki);
@@ -169,6 +173,7 @@ private:
 public:
 	//デバック時に参照できるようpublicに置いてある
 	static PID gyro_delta,photo_delta,encoder_delta;//各種Δ
+	static PID angle_delta;	//とりあえずためしに
 
 	static void cal_delta();//割り込み関数内で、偏差を計算する
 

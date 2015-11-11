@@ -44,6 +44,7 @@ private:
 
 public:
 
+	static bool slalom_flag;
 	static MAP_DATA now_map;
 
 	static void reset_count();
@@ -86,7 +87,7 @@ public:
 
 	//壁を見て、壁が存在するなら壁を作り、ないなら壊す。見たことも記録
 	//マウスの向きや座標も内部できちんと考える
-	static void look_wall();//壁を見る関数
+	static void look_wall(bool comb_ignore);//壁を見る関数
 
 	~mouse();
 
@@ -97,7 +98,15 @@ private:
 	run();
 
 public:
+
+	static void fit_stop(const float distance_m, const float select_mode, const float fit_velocity);	//袋小路でちょうど半分で止まるための関数
+
+	static void back_run(const float distance_m, const float end_velocity, const unsigned char select_mode);
+
 	static void accel_run(const float distance_m, const float end_velocity, const unsigned char select_mode);
+	//壁切れを目標距離-check_distanceの距離から見始める
+	static void accel_run_wall_off(const float distance_m, const float end_velocity, const unsigned char select_mode, const float check_distance);
+
 	static void slalom(const SLALOM_TYPE slalom_type, const signed char right_or_left, const unsigned char select_mode);
 	static void spin_turn(const float target_degree);
 	static void slalom_by_sin(const SLALOM_TYPE slalom_type, const signed char right_or_left, const unsigned char select_mode);
@@ -144,13 +153,16 @@ private:
 	//次行く方向を与えると、次に取る行動を返す。優先度は、直進、右ターン、左ターン、バックの順
 	static ACTION_TYPE get_next_action(DIRECTION next_direction);
 
+	//引数に応じて次の行動をマウスが実行する（実際に動く部分）
+	static void run_next_action(ACTION_TYPE next_action, bool wall_off);
+	static void run_next_action_slalom(ACTION_TYPE next_action, bool wall_off);
+
 	adachi();
 
 public:
-	//引数に応じて次の行動をマウスが実行する（実際に動く部分）
-	static void run_next_action(ACTION_TYPE next_action);
 
 	static bool adachi_method(const unsigned char target_x, const unsigned char target_y);
+	static bool adachi_method_wall_off(const unsigned char target_x, const unsigned char target_y);
 	~adachi();
 
 };
@@ -162,7 +174,7 @@ private:
 public:
 	static unsigned char run_mode;
 	static void set_run_mode(const unsigned char select_mode);		//パラメータ0は超信地
-	static void run_carcuit(const unsigned char maze_x_size,const unsigned char maze_y_sizeconst, const unsigned char cycle_count);
+	static void run_carcuit(const unsigned char maze_x_size,const unsigned char maze_y_sizeconst, const unsigned char cycle_count,bool wall_off);
 
 	~carcuit();
 };

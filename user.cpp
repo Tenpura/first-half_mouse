@@ -54,7 +54,8 @@ unsigned long wait_package(const unsigned char wait_mode,
 	return count_ms;
 }
 
-unsigned char mode::select_mode(const unsigned char mode_number, const unsigned char muki) {
+unsigned char mode::select_mode(const unsigned char mode_number,
+		const unsigned char muki) {
 	unsigned char select = 0;
 
 	while (1) {
@@ -95,7 +96,7 @@ unsigned char mode::select_mode(const unsigned char mode_number, const unsigned 
 bool mode::search_mode() {
 	signed char direction_x, direction_y;
 
-	switch (select_mode(5,MUKI_RIGHT)) {
+	switch (select_mode(5, MUKI_RIGHT)) {
 	case 0:		//0はメニューに戻る
 		break;
 
@@ -122,6 +123,18 @@ bool mode::search_mode() {
 		break;
 
 	case 3:
+		mouse::set_position(0, 0);
+		mouse::set_direction(MUKI_UP);
+		if (adachi::adachi_method_wall_off(GOAL_x, GOAL_y)) {	//足立法が成功したら
+			wait_ms(100);
+			mouse::set_position(GOAL_x, GOAL_y);
+			run::spin_turn(180);
+			mouse::turn_direction(MUKI_RIGHT);
+			mouse::turn_direction(MUKI_RIGHT);
+			wait_ms(100);
+
+			adachi::adachi_method_wall_off(0, 0);
+		}
 		break;
 	case 4:
 		break;

@@ -87,6 +87,7 @@ void main(void) {
 	my7seg::turn_off();
 
 	map::reset_wall();
+	map::output_map_data(&mouse::now_map);
 
 	/*
 	 motor::stanby_motor();
@@ -101,22 +102,28 @@ void main(void) {
 	 */
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-
-		myprintf("left %f, right %f\n\r", encoder::left_velocity,
-				encoder::right_velocity);
-
 		/*
-		 myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
-		 photo::get_ad(left), photo::get_ad(front_right),
-		 photo::get_ad(front_left));
+		 myprintf("left %f, right %f\n\r", encoder::left_velocity,
+		 encoder::right_velocity);
 		 */
+
+		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
+				photo::get_ad(left), photo::get_ad(front_right),
+				photo::get_ad(front_left));
+
+		if (photo::check_wall(MUKI_UP)) {
+			my7seg::light(6);
+		} else {
+			my7seg::turn_off();
+		}
+
 		wait_ms(100);
 
 	}
 
 	motor::sleep_motor();
 
-	char select_mode = mode::select_mode(6, MUKI_UP);
+	char select_mode = mode::select_mode(6, MUKI_RIGHT);
 	carcuit::set_run_mode(select_mode);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
@@ -146,10 +153,12 @@ void main(void) {
 
 		mouse::set_distance_m(0);
 
-		run::accel_run(0.09, SEARCH_VELOCITY, 0);
 		float_log.reset_log();
-		run::slalom(small, MUKI_RIGHT, 0);
-		run::accel_run(0.09, 0, 0);
+
+		//run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+		//run::slalom(small, MUKI_LEFT, 0);
+		//run::accel_run(0.09 / MOUSE_MODE, 0, 0);
+		run::back_run(-0.18,0,0);
 		wait_ms(1000);
 
 		break;
@@ -163,44 +172,54 @@ void main(void) {
 		break;
 
 	case 2:
+		my7seg::turn_off();
+		wait_ms(1000);
+		signed char carcuit_mode = mode::select_mode(RUN_MODE_NUMBER,
+		MUKI_RIGHT);
+		carcuit::set_run_mode(carcuit_mode);
+		switch (carcuit_mode) {
+		case 0:
+			carcuit::run_carcuit(16, 16, 2, false);
+			break;
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+			carcuit::run_carcuit(16, 16, 2, true);
+			break;
+		}
+
+		break;
+
+	case 3:
+		wait_ms(1000);
 		mouse::set_fail_flag(false);
-
 		motor::stanby_motor();
-
 		mouse::reset_angle();
 		mouse::set_ideal_velocity(0);
 		mouse::set_ideal_angular_velocity(0);
 		control::reset_delta(sen_all);
-
 		control::start_control();
 		my7seg::count_down(3, 500);
-
 		control::start_wall_control();
 
-		mouse::set_distance_m(0);
+		while (mouse::get_fail_flag() == false) {
+			float_log.reset_log();
 
-		my7seg::turn_off();
-		//run::accel_run(0.09, SEARCH_VELOCITY, 0);
-		float_log.reset_log();
-		//run::spin_turn(90);
-		//run::slalom_by_sin(small, MUKI_LEFT, 0);
-		run::accel_run(0.18*5, 0, 0);
-		wait_ms(100);
-		break;
+			mouse::set_distance_m(0);
+			//run::accel_run(0.18 * 2, 0, 0);
+			wait_ms(500);
+			run::spin_turn(180);
+			wait_ms(500);
 
-	case 3:
-		for (int i = 0; i < 360; i++) {
-			myprintf("%d -> %f \n\r", i,
-					9.8 * 9.8 * 3 * my_math::sin(3 * 9.8 * i * CONTROL_PERIOD)
-							/ 2);
-			wait_ms(10);
 		}
+
 		break;
 	case 4:
 		my7seg::count_down(3, 500);
 		motor::stanby_motor();
 		float_log.reset_log();
-		left_hand::run2(3,3);
+		left_hand::run2(3, 3);
 		wait_ms(1000);
 		break;
 
@@ -218,43 +237,25 @@ void main(void) {
 
 		control::start_control();
 		my7seg::count_down(3, 500);
-/*
-		while (1) {
-		}
-*/
-		control::start_wall_control();
 
+		/*
+		 while (1) {
+		 mouse::slalom_flag=true;
+		 }
+		 */
+		control::start_wall_control();
+		mouse::set_distance_m(0);
 		float_log.reset_log();
 
-		mouse::set_distance_m(0);
-		//run::accel_run(0.18 * 5, 0, 0);
-		run::spin_turn(90);
+		run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+		run::accel_run_wall_off(0.18 * 2 / MOUSE_MODE, SEARCH_VELOCITY, 0,
+				0.18);
+		run::accel_run(0.09 / MOUSE_MODE, 0, 0);
+
+		wait_ms(1000);
+
+		break;
 	}
-
-	wait_ms(1000);
-	/*
-
-	 motor::stanby_motor();
-
-	 mouse::reset_angle();
-	 mouse::set_ideal_velocity(0);
-	 mouse::set_ideal_angular_velocity(0);
-	 control::reset_delta(sen_all);
-
-	 control::start_control();
-	 my7seg::count_down(3, 500);
-
-	 control::start_wall_control();
-
-	 float_log.reset_log();
-
-	 mouse::set_distance_m(0);
-
-	 //run::accel_run(0.18, SEARCH_VELOCITY, 0);
-	 run::accel_run(0.18, 0, 0);
-
-	 //	run::accel_run(0.18 * 15, 0, select_mode);
-	 */
 
 	//adachi::run_next_action(stop);
 	motor::sleep_motor();
@@ -277,26 +278,28 @@ void interrupt_cmt0() {
 	set_count_ms(get_count_ms() + 1);		//ms(ミリ秒)のカウントを1増加
 	mouse::add_one_count_ms();
 
-	gyro::set_gyro();				//gyroの値を取得
-	gyro::cal_angle();				//gyroから角度を計算
-	gyro::cal_angular_velocity();	//gyroから角速度を計算[°/s]
+	gyro::set_gyro();		//gyroの値を取得
+	gyro::cal_angle();		//gyroから角度を計算
+	gyro::cal_angular_velocity();		//gyroから角速度を計算[°/s]
 
 	encoder::cal_encoder();
 
 	mouse::cal_accel();
 	mouse::cal_distance();
 
-	control::cal_delta();			//姿勢制御に用いる偏差を計算
+	control::cal_delta();		//姿勢制御に用いる偏差を計算
 	control::posture_control();
 
-	motor::mtu_set();	//mtuをdutyに応じて変更
+	motor::mtu_set();		//mtuをdutyに応じて変更
 
 	control::fail_safe();
 
-	float_log::put_log(mouse::get_distance_m(),photo::get_ad(right));
-			//gyro::get_angular_velocity(),mouse::get_ideal_angular_velocity());
+	float_log::put_log(gyro::get_angular_velocity(),mouse::get_ideal_angular_velocity());
 
-	}
+//mouse::get_distance_m(), photo::get_ad(right));
+	//gyro::get_angular_velocity(),mouse::get_ideal_angular_velocity());
+
+}
 
 void interrupt_cmt1() {
 	MSTP( CMT1 ) = 0;		// 　CMT1スタンバイ解除

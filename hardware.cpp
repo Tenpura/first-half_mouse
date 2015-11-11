@@ -176,12 +176,12 @@ void gyro::set_gyro() {
 	gyro_value = ad_convert_gyro();
 }
 
-unsigned short gyro::get_gyro() {
-	return gyro_value;
+float gyro::get_gyro() {
+	return (float) gyro_value;
 }
 
 float gyro::get_gyro_ref() {
-	long gyro_sum = 0;
+	float gyro_sum = 0;
 	for (int i = 0; i < 1000; i++) {
 		gyro_sum += get_gyro();
 		wait_ms(1);
@@ -239,11 +239,11 @@ void gyro::reset_angle() {
 void gyro::cal_angle() {
 	before_angle = angle;
 	//右回りのとき
-	if ((gyro_value - gyro_ref) > 0) {
-		default_angle += (gyro_value - gyro_ref) * GYRO_CONST_RIGHT * LOGIK_V
+	if ((get_gyro() - gyro_ref) > 0) {
+		default_angle += (get_gyro() - gyro_ref) * GYRO_CONST_RIGHT * LOGIK_V
 				/ 4096;
 	} else {
-		default_angle += (gyro_value - gyro_ref) * GYRO_CONST_LEFT * LOGIK_V
+		default_angle += (get_gyro() - gyro_ref) * GYRO_CONST_LEFT * LOGIK_V
 				/ 4096;
 	}
 	//最小二乗法で補正する
@@ -255,8 +255,20 @@ float gyro::get_angle() {
 	return angle;	//°
 }
 
+void gyro::set_angle(float set_degree){
+	angle = set_degree;
+}
+
 void gyro::cal_angular_velocity() {
+	float before_angular_velocity = angular_velocity;
 	angular_velocity = radian((get_angle() - before_angle) * 1000);
+
+	//FIXME 対処療法。スラローム中あまりに激しく変化する場合は切る
+	if (mouse::slalom_flag) {
+		if (ABS(angular_velocity - before_angular_velocity) > 5) {
+			angular_velocity = before_angular_velocity;
+		}
+	}
 }
 
 float gyro::get_angular_velocity() {
@@ -389,6 +401,8 @@ motor::~motor() {
 
 }
 
+signed int photo::right_delta, photo::left_delta, photo::front_right_delta,
+		photo::front_left_delta;
 signed int photo::right_ad, photo::left_ad, photo::front_right_ad,
 		photo::front_left_ad;
 signed int photo::right_ref, photo::left_ref, photo::front_right_ref,
@@ -433,23 +447,33 @@ void photo::turn_off_all() {
 }
 
 void photo::set_ad(PHOTO_TYPE sensor_type, bool on_light) {
+	signed int temp_ad;
+
 	//LEDが光っているなら消えてるときとの差分を取る
 	if (on_light) {
 		switch (sensor_type) {
 		case right:
+			temp_ad = right_ad;
 			right_ad = (ad_convert_an102() - right_ref);
+			right_delta = right_ad - temp_ad;
 			break;
 
 		case left:
+			temp_ad = left_ad;
 			left_ad = (ad_convert_an002() - left_ref);
+			left_delta = left_ad - temp_ad;
 			break;
 
 		case front_right:
+			temp_ad = front_right_ad;
 			front_right_ad = (ad_convert_an103() - front_right_ref);
+			front_right_delta = front_right_ad - temp_ad;
 			break;
 
 		case front_left:
+			temp_ad = front_left_ad;
 			front_left_ad = (ad_convert_an001() - front_left);
+			front_left_delta = front_left_ad - temp_ad;
 			break;
 		}
 
@@ -475,7 +499,7 @@ void photo::set_ad(PHOTO_TYPE sensor_type, bool on_light) {
 	}
 }
 
-unsigned int photo::get_ad(PHOTO_TYPE sensor_type) {
+signed int photo::get_ad(PHOTO_TYPE sensor_type) {
 	switch (sensor_type) {
 	case right:
 		return right_ad;
@@ -491,6 +515,28 @@ unsigned int photo::get_ad(PHOTO_TYPE sensor_type) {
 
 	case front_left:
 		return front_left_ad;
+		break;
+	}
+
+	return 0;
+}
+
+signed int photo::get_ad_delta(PHOTO_TYPE sensor_type) {
+	switch (sensor_type) {
+	case right:
+		return right_delta;
+		break;
+
+	case left:
+		return left_delta;
+		break;
+
+	case front_right:
+		return front_right_delta;
+		break;
+
+	case front_left:
+		return front_left_delta;
 		break;
 	}
 
@@ -532,28 +578,42 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 22, 200, 0 };
-const PID photo_gain = { 0.03, 0.01, 0.0 };
+const PID gyro_gain = { 50, 150, 0 };
+const PID photo_gain = { 0.02, 0.0, 0.0 };
 const PID encoder_gain = { 280, 18000, 0 };
 
+const PID angle_gain = { 0, 0, 0 };		//角度に対するゲイン　Pゲインは角速度のIゲインと同じなので0にしとく
+
+const PID gyro_gain_straight = { 24, 3.0, 0 };
+
 PID control::gyro_delta, control::photo_delta, control::encoder_delta;
+PID control::angle_delta;
 bool control::control_phase = false;
 bool control::wall_control_flag = false;
 
 float control::cross_delta_gain(SEN_TYPE sensor) {
 	switch (sensor) {
 	case sen_gyro:
-		return (gyro_delta.P * gyro_gain.P + gyro_delta.I * gyro_gain.I
-				+ gyro_delta.D * gyro_gain.D);
+		if (mouse::slalom_flag) {
+			return (gyro_delta.P * gyro_gain.P + gyro_delta.I * gyro_gain.I
+					+ gyro_delta.D * gyro_gain.D + angle_delta.I * angle_gain.I);
+		} else {
+			return (gyro_delta.P * gyro_gain_straight.P
+					+ gyro_delta.I * gyro_gain_straight.I
+					+ gyro_delta.D * gyro_gain_straight.D);
+		}
+		break;
 
 	case sen_encoder:
 		return (encoder_delta.P * encoder_gain.P
 				+ encoder_delta.I * encoder_gain.I
 				+ encoder_delta.D * encoder_gain.D);
+		break;
 
 	case sen_photo:
 		return ((float) photo_delta.P * photo_gain.P
 				+ photo_delta.I * photo_gain.I + photo_delta.D * photo_gain.D);
+		break;
 	}
 	return 0;
 }
@@ -564,6 +624,8 @@ void control::cal_delta() {
 	volatile float photo_right_delta = 0, photo_left_delta = 0;
 	static float right_before, left_before;
 	float right_now, left_now;
+	static float right_ideal = (float) parameter::get_ideal_photo(right),
+			left_ideal = (float) parameter::get_ideal_photo(left);
 
 	if (get_control_phase() == false) {			//姿勢制御を掛けないなら計算しない
 		return;
@@ -581,7 +643,7 @@ void control::cal_delta() {
 	right_now = (float) photo::get_ad(right);
 
 	//速度が低いと制御が効きすぎるので（相対的に制御が大きくなる）、切る
-	if (encoder::get_velocity() <= (SEARCH_VELOCITY * 0.5)) {
+	if (encoder::get_velocity() <= (SEARCH_VELOCITY / MOUSE_MODE * 0.8)) {
 		photo_left_delta = 0;
 		photo_right_delta = 0;
 
@@ -598,8 +660,7 @@ void control::cal_delta() {
 			if ((right_now - right_before) > wall_brake) {
 				photo_right_delta = 0;
 			} else {
-				photo_right_delta = (parameter::get_ideal_photo(right)
-						- right_now);
+				photo_right_delta = (right_ideal - right_now);
 			}
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
@@ -607,14 +668,12 @@ void control::cal_delta() {
 				if ((left_now - left_before) > wall_brake) {
 					photo_left_delta = 0;
 				} else {
-					photo_left_delta = (parameter::get_ideal_photo(left)
-							- left_now);
+					photo_left_delta = (left_ideal - left_now);
 				}
 			} else {
 				//片方のときは、壁のある方を2倍かけることで疑似的に両壁アリと同じ制御量にする
 				photo_left_delta = 0;
-				photo_right_delta = 2
-						* (parameter::get_ideal_photo(right) - right_now);
+				photo_right_delta = 2 * (right_ideal - right_now);
 
 			}
 		} else {			//右がない
@@ -625,8 +684,7 @@ void control::cal_delta() {
 				if ((left_now - left_before) > wall_brake) {
 					photo_left_delta = 0;
 				} else {
-					photo_left_delta = 2
-							* (parameter::get_ideal_photo(left) - left_now);
+					photo_left_delta = 2 * (left_ideal - left_now);
 				}
 			} else {
 				//両方ない
@@ -641,12 +699,6 @@ void control::cal_delta() {
 	left_before = left_now;
 
 	photo_delta.P = (photo_right_delta - photo_left_delta);
-	//FIXME　Pの偏差が-4294967187.5になることがあるっぽい
-	//どちらにしろセンサーの分解能的にこんな大きな値にはなるはずないから、これははじく
-	if (ABS(photo_delta.P) > 40000) {
-		photo_delta.P = 0;
-	}
-
 	photo_delta.I += (photo_delta.P * CONTROL_PERIOD);
 	//photo_delta.D = (photo_delta.P - before_p_delta) * 1000;
 
@@ -656,6 +708,8 @@ void control::cal_delta() {
 			- gyro::get_angular_velocity());
 	gyro_delta.I += (gyro_delta.P * CONTROL_PERIOD);
 	//gyro_delta.D = (gyro_delta.P - before_p_delta) * 1000;
+	angle_delta.P = gyro_delta.I;
+	angle_delta.I += (angle_delta.P * CONTROL_PERIOD);
 
 }
 
@@ -670,6 +724,7 @@ float control::control_angular_velocity() {
 			//photo_delta.I = 0;
 		} else {
 			gyro_delta.I = 0;
+			angle_delta.I = 0;
 		}
 		return (cross_delta_gain(sen_gyro) + cross_delta_gain(sen_photo));
 	} else {
@@ -709,11 +764,13 @@ float control::get_feedforward(const signed char right_or_left) {
 
 	if (right_or_left == MUKI_RIGHT) {			//右のモーターなら
 		velocity = mouse::get_ideal_velocity()
-				- (mouse::get_ideal_angular_velocity() * TREAD_W / 2 / 1000);
+				- (mouse::get_ideal_angular_velocity() * TREAD_W
+						* CONTROL_PERIOD / 2);
 
 	} else {									//左のモーターなら
 		velocity = mouse::get_ideal_velocity()
-				+ (mouse::get_ideal_angular_velocity() * TREAD_W / 2 / 1000);
+				+ (mouse::get_ideal_angular_velocity() * TREAD_W
+						* CONTROL_PERIOD / 2);
 
 	}
 	return (velocity / (2 * PI() * TIRE_R / 1000) * SPAR / PINION * M_SUM_ORM
@@ -754,6 +811,8 @@ void control::reset_delta(SEN_TYPE sensor_type) {
 		gyro_delta.P = 0;
 		gyro_delta.I = 0;
 		gyro_delta.D = 0;
+		angle_delta.P = 0;
+		angle_delta.I = 0;
 		break;
 
 	case sen_photo:
@@ -772,6 +831,10 @@ void control::reset_delta(SEN_TYPE sensor_type) {
 		gyro_delta.P = 0;
 		gyro_delta.I = 0;
 		gyro_delta.D = 0;
+
+		angle_delta.P = 0;
+		angle_delta.I = 0;
+
 		photo_delta.P = 0;
 		photo_delta.I = 0;
 		photo_delta.D = 0;

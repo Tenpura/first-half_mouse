@@ -33,8 +33,8 @@
 #define M_SUM_ORM	5.5		//上2つの合算抵抗[Ω]
 
 #define GYRO_SENSITIVITY	0.67		//Gyroの感度[mV・s/degree]
-#define GYRO_CONST_RIGHT	1.51		//gyroの定数[degree/V/ms]パラメーターの1つ
-#define GYRO_CONST_LEFT		1.57		//gyroの定数[degree/V/ms]パラメーターの1つ
+#define GYRO_CONST_RIGHT	1.53		//gyroの定数[degree/V/ms]パラメーターの1つ
+#define GYRO_CONST_LEFT		1.53		//gyroの定数[degree/V/ms]パラメーターの1つ
 
 #define ENCODER_CONST	(1.534 * 0.001)			//encoderの分解能[rad/count]
 
@@ -189,7 +189,8 @@ typedef struct {
 	float before_distance;		//前距離[m]
 	float after_distance;		//後距離[m]
 	float angular_accel;		//角加速度
-float time;					//どれだけ時間がかかるのか[sec]
+	float max_angular_velocity;	//最大角速度
+	float time;					//どれだけ時間がかかるのか[sec]
 } INIT_SLALOM;
 
 //スラロームパラメーターの要素
@@ -200,7 +201,7 @@ typedef enum {
 	before_distance,
 	after_distance,
 	angular_accel,
-	//max_angular_velocity,
+	max_angular_velocity,
 	time
 } SLALOM_ELEMENT;
 
