@@ -20,13 +20,13 @@
 
 #define MOVING_AVERAGE		3						//encoderでいくつの移動平均をとるか
 
-#define LEAST_SQUARE_TIME	2000		//ジャイロの最小二乗法を何ms出かけるか
+#define LEAST_SQUARE_TIME	5000		//ジャイロの最小二乗法を何ms出かけるか
 
 #define LOG_DIMENSION	2	//何次元配列を用意するか
 #define LOG_COUNT 750	//LOGをいくつとるか。最低1、0にはしないこと
 
 #define INT_LOG_COUNT	1	//Int型のLogをいくつとるか　最低1
-#define MAX_DUTY	70	//motorのduty制限[%]
+#define MAX_DUTY	100	//motorのduty制限[%]
 
 #define FB_SWITCH	ON	//フィードバック制御を入れるか入れないか
 #define FF_SWITCH	OFF	//フィードフォワードを入れるか入れないか

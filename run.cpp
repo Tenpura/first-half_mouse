@@ -12,6 +12,7 @@ float mouse::ideal_velocity, mouse::ideal_angular_velocity;
 float mouse::run_distance;
 unsigned long mouse::mouse_count_ms;
 
+bool mouse::back_run_flag = false;
 bool mouse::slalom_flag = false;
 
 MAP_DATA mouse::now_map;
@@ -637,7 +638,7 @@ void run::accel_run(const float distance_m, const float end_velocity,
 void run::back_run(const float distance_m, const float end_velocity,
 		const unsigned char select_mode) {
 
-	float max_velocity = parameter::get_run_max_velocity(select_mode);
+	float max_velocity = 0.3;	//parameter::get_run_max_velocity(select_mode);
 	float accel_value = parameter::get_run_acceleration(select_mode);
 	float de_accel_value = -ABS(
 			parameter::get_run_de_acceleration(select_mode));
@@ -646,15 +647,19 @@ void run::back_run(const float distance_m, const float end_velocity,
 			mouse::get_ideal_velocity() * mouse::get_ideal_velocity()
 			- end_velocity * end_velocity) / (2 * de_accel_value);	//減速に必要な距離
 
+	long temp_count;	//一時的に保存しとくよう
+	static const long back_count = 300;	//等速でバックしてる時間[ms]
+
 	if (distance_m < 0) {		//バックする時
 		accel_value = -ABS(accel_value);
 		max_velocity = -ABS(max_velocity);
 		de_accel_value = -ABS(de_accel_value);
+		mouse::back_run_flag = true;
 	}
 
 //加速
 	mouse::set_acceleration(accel_value);
-	while (mouse::get_ideal_velocity() > (max_velocity)) {
+	while (ABS(mouse::get_ideal_velocity()) < ABS(max_velocity)) {
 		//現在速度から減速にかかる距離を計算
 
 		/*
@@ -676,7 +681,13 @@ void run::back_run(const float distance_m, const float end_velocity,
 
 //等速
 	mouse::set_acceleration(0);
+	temp_count = mouse::get_count_ms();
 	while (1) {
+		//back_countだけ時間が経ったら強制的に打ち切る
+		if ((mouse::get_count_ms() - temp_count) > back_count) {
+			break;
+		}
+
 		//現在速度から減速にかかる距離を計算
 		de_accel_distance = ABS(
 				(mouse::get_ideal_velocity() * mouse::get_ideal_velocity()
@@ -731,6 +742,8 @@ void run::back_run(const float distance_m, const float end_velocity,
 		}
 	}
 
+	mouse::back_run_flag = false;
+	control::reset_delta(sen_all);
 	mouse::set_distance_m(0);
 }
 
@@ -886,12 +899,13 @@ void run::slalom(const SLALOM_TYPE slalom_type, const signed char right_or_left,
 	mouse::set_angular_acceleration(0);
 	mouse::set_ideal_angular_velocity(0);
 
-	mouse::slalom_flag = false;
 //後ろ距離分走る
 	mouse::set_distance_m(0);
 	distance = parameter::get_slalom((slalom_type), after_distance,
 			right_or_left, select_mode);
 	accel_run(distance, slalom_velocity, select_mode);
+
+	mouse::slalom_flag = false;
 
 	control::reset_delta(sen_gyro);
 
@@ -1615,8 +1629,10 @@ void adachi::run_next_action(ACTION_TYPE next_action, bool wall_off) {
 }
 
 void adachi::run_next_action_slalom(ACTION_TYPE next_action, bool wall_off) {
-
+	bool front_wall_flag = false, right_wall_flag = false, left_wall_flag =
+			false;
 	my7seg::turn_off();
+	static const short back_break_time = 100;	//尻当てするときの待機時間
 
 	switch (next_action) {
 	case go_straight:
@@ -1655,13 +1671,58 @@ void adachi::run_next_action_slalom(ACTION_TYPE next_action, bool wall_off) {
 
 	case back:
 //半区間進んで180°ターンして半区間直進
+
+		//前壁があればそこで尻当てするためにフラグをたてる
+		if (photo::check_wall(MUKI_UP)) {
+			front_wall_flag = true;
+		}
+		if (photo::check_wall(MUKI_RIGHT)) {
+			right_wall_flag = true;
+		} else if (photo::check_wall(MUKI_LEFT)) {
+			left_wall_flag = true;
+		}
+
 		control::start_wall_control();
 		run::fit_stop(0.09, 0, 0.1);
 		run::spin_turn(180);
 		direction_turn(&direction_x, &direction_y, MUKI_RIGHT);	//向きを90°変える
 		direction_turn(&direction_x, &direction_y, MUKI_RIGHT);	//向きを90°変える
 		control::stop_wall_control();
-		run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);	//半区間直進
+
+		//尻当てする
+		if (right_wall_flag) {
+			run::spin_turn(90);
+			wait_ms(back_break_time);
+			run::back_run(-0.18, 0, 0);
+			wait_ms(back_break_time);
+			run::accel_run(0.06, 0, 0);
+			wait_ms(back_break_time);
+			run::spin_turn(-90);
+
+		} else if (left_wall_flag) {
+			run::spin_turn(-90);
+			wait_ms(back_break_time);
+			run::back_run(-0.18, 0, 0);
+			wait_ms(back_break_time);
+			run::accel_run(0.06, 0, 0);
+			wait_ms(back_break_time);
+			run::spin_turn(90);
+
+		}
+
+		wait_ms(back_break_time);
+		control::stop_wall_control();
+
+		if (front_wall_flag) {
+			run::back_run(-0.18, 0, 0);
+			wait_ms(back_break_time);
+			control::stop_wall_control();
+			run::accel_run_wall_off(0.06 + 0.09, SEARCH_VELOCITY, 0, 0.11);
+		} else {
+			run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);	//半区間直進
+
+		}
+
 		control::start_wall_control();
 		break;
 
@@ -1746,7 +1807,8 @@ ACTION_TYPE adachi::get_next_action(DIRECTION next_direction) {
 	return stop;
 }
 
-bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
+bool adachi::adachi_method_spin(unsigned char target_x,
+		unsigned char target_y) {
 	bool adachi_flag = true;	//途中でミスがあったらfalseに
 	unsigned char now_x, now_y;	//座標一時保存用。見易さのため
 	DIRECTION next_direction, priority_direction;	//次に行く方向を管理
@@ -1914,8 +1976,7 @@ bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 	return false;
 }
 
-bool adachi::adachi_method_wall_off(unsigned char target_x,
-		unsigned char target_y) {
+bool adachi::adachi_method(unsigned char target_x, unsigned char target_y) {
 	bool adachi_flag = true;	//途中でミスがあったらfalseに
 	unsigned char now_x, now_y;	//座標一時保存用。見易さのため
 	DIRECTION next_direction, priority_direction;	//次に行く方向を管理
@@ -2036,6 +2097,169 @@ bool adachi::adachi_method_wall_off(unsigned char target_x,
 			}
 
 		}
+//未探索区間が候補の中にあるなら、次に行く方向はその中から選ぶ
+		if (priority_direction.all != 0) {
+			next_direction.all = priority_direction.all;
+		}
+
+//next_dirrctionから次行く方向を選び、行動する
+		next_action = get_next_action(next_direction);
+		run_next_action_slalom(next_action, true);
+
+//もし止まるべきと出たならココで足立法をやめる
+		if (next_action == stop) {
+			adachi_flag = false;
+		}
+
+//方向更新
+		mouse::set_direction(direction_x, direction_y);
+	}
+
+	if (adachi_flag) {
+		//足立法が成功したのでマップを保存する
+		map::output_map_data(&mouse::now_map);
+		return true;		//足立法完了!!
+
+	} else {
+//ここに来るということは足立法が失敗してる
+		motor::sleep_motor();
+//TODO わかりやすい何かが欲しい
+		error();
+		myprintf("Adachi method failed!\n\r");
+		if (mouse::get_fail_flag()) {
+			myprintf("fail safe!\n\r");
+		}
+
+		myprintf("now -> (%d,%d)\n\r", mouse::get_x_position(),
+				mouse::get_y_position());
+	}
+
+	return false;
+}
+
+bool adachi::adachi_method_verF(unsigned char target_x,
+		unsigned char target_y) {
+	bool adachi_flag = true;	//途中でミスがあったらfalseに
+	unsigned char now_x, now_y;	//座標一時保存用。見易さのため
+	DIRECTION next_direction, priority_direction;	//次に行く方向を管理
+	unsigned char max_unknown_count, target_unknown_count;	//未探索の壁の数を管理
+	ACTION_TYPE next_action;	//次の行動を管理
+
+	my7seg::turn_off();
+
+	map::input_map_data(&mouse::now_map);
+
+//向きを取得
+	mouse::get_direction(&direction_x, &direction_y);
+
+	control::stop_wall_control();
+	mouse::set_fail_flag(false);
+
+	motor::stanby_motor();
+
+	wait_ms(1000);
+
+	mouse::reset_angle();
+	mouse::set_ideal_velocity(0);
+	mouse::set_ideal_angular_velocity(0);
+	control::reset_delta(sen_all);
+
+	control::start_control();
+
+	my7seg::count_down(3, 500);
+
+	mouse::set_distance_m(0);
+	control::start_wall_control();
+
+	run::accel_run((0.09 / MOUSE_MODE), SEARCH_VELOCITY, 0);
+
+	while (adachi_flag) {
+//フェイルセーフが掛かっていればそこで抜ける
+		if (mouse::get_fail_flag()) {
+			adachi_flag = false;
+			break;
+		}
+
+//座標を更新
+		now_x = mouse::get_x_position() + direction_x;
+		now_y = mouse::get_y_position() + direction_y;
+		mouse::set_position(now_x, now_y);
+//向きも更新
+		mouse::set_direction(direction_x, direction_y);
+
+//壁情報更新
+		mouse::look_wall(false);
+
+//目標の座標にたどり着いたら終了
+		if ((now_x == target_x) && (now_y == target_y)) {
+			run_next_action(stop, true);
+			break;
+		}
+
+//歩数マップ作製
+		step::set_step(target_x, target_y);
+
+//方向と未探索の壁の数をリセット
+		next_direction.all = 0;
+		priority_direction.all = 0;
+		max_unknown_count = 1;	//0をはじくため
+
+//歩数的に前後左右のマスへ行けるか判別.
+//行ければ次行く方向の候補に入れる
+//更に見てない壁の数が多ければpriority_directionの方にも候補として追加
+
+		if (check_move_by_step(now_x, now_y, MUKI_RIGHT)) {				//右
+			next_direction.element.right = 1;
+
+			target_unknown_count = count_unknown_wall((now_x + 1), now_y);
+			if (target_unknown_count == max_unknown_count) {
+				priority_direction.element.right = 1;
+			} else if (target_unknown_count >= max_unknown_count) {
+				max_unknown_count = target_unknown_count;
+				priority_direction.all = 0;				//他の方向はいらないのでリセット
+				priority_direction.element.right = 1;
+			}
+
+		}
+		if (check_move_by_step(now_x, now_y, MUKI_LEFT)) {				//左
+			next_direction.element.left = 1;
+
+			target_unknown_count = count_unknown_wall((now_x - 1), now_y);
+			if (target_unknown_count == max_unknown_count) {
+				priority_direction.element.left = 1;
+			} else if (target_unknown_count >= max_unknown_count) {
+				max_unknown_count = target_unknown_count;
+				priority_direction.all = 0;				//他の方向はいらないのでリセット
+				priority_direction.element.left = 1;
+			}
+
+		}
+		if (check_move_by_step(now_x, now_y, MUKI_UP)) {				//上
+			next_direction.element.up = 1;
+
+			target_unknown_count = count_unknown_wall(now_x, (now_y + 1));
+			if (target_unknown_count == max_unknown_count) {
+				priority_direction.element.up = 1;
+			} else if (target_unknown_count >= max_unknown_count) {
+				max_unknown_count = target_unknown_count;
+				priority_direction.all = 0;				//他の方向はいらないのでリセット
+				priority_direction.element.up = 1;
+			}
+
+		}
+		if (check_move_by_step(now_x, now_y, MUKI_DOWN)) {				//下
+			next_direction.element.down = 1;
+
+			target_unknown_count = count_unknown_wall(now_x, (now_y - 1));
+			if (target_unknown_count == max_unknown_count) {
+				priority_direction.element.down = 1;
+			} else if (target_unknown_count >= max_unknown_count) {
+				max_unknown_count = target_unknown_count;
+				priority_direction.all = 0;				//他の方向はいらないのでリセット
+				priority_direction.element.down = 1;
+			}
+
+		}
 
 //未探索区間が候補の中にあるなら、次に行く方向はその中から選ぶ
 		if (priority_direction.all != 0) {
@@ -2044,6 +2268,16 @@ bool adachi::adachi_method_wall_off(unsigned char target_x,
 
 //next_dirrctionから次行く方向を選び、行動する
 		next_action = get_next_action(next_direction);
+
+		//古川法
+		if (photo::check_wall(MUKI_UP) == false) {		//前に壁がなければ
+			//前方に見てない壁があれば
+			if (count_unknown_wall((now_x + direction_x), (now_y + direction_y))
+					> 0) {
+				next_action = go_straight;
+			}
+		}
+
 		run_next_action_slalom(next_action, true);
 
 //もし止まるべきと出たならココで足立法をやめる

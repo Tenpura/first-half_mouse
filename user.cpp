@@ -103,10 +103,26 @@ bool mode::search_mode() {
 	case 1:		//1は普通の足立法
 		mouse::set_position(0, 0);
 		mouse::set_direction(MUKI_UP);
-		adachi::adachi_method(GOAL_x, GOAL_y);
+		adachi::adachi_method_spin(GOAL_x, GOAL_y);
 		break;
 
 	case 2:		//2は帰りもあるよ
+		mouse::set_position(0, 0);
+		mouse::set_direction(MUKI_UP);
+		if (adachi::adachi_method_spin(GOAL_x, GOAL_y)) {	//足立法が成功したら
+			wait_ms(100);
+			mouse::set_position(GOAL_x, GOAL_y);
+			run::spin_turn(180);
+			mouse::turn_direction(MUKI_RIGHT);
+			mouse::turn_direction(MUKI_RIGHT);
+			wait_ms(100);
+
+			adachi::adachi_method_spin(0, 0);
+		}
+
+		break;
+
+	case 3:
 		mouse::set_position(0, 0);
 		mouse::set_direction(MUKI_UP);
 		if (adachi::adachi_method(GOAL_x, GOAL_y)) {	//足立法が成功したら
@@ -119,13 +135,11 @@ bool mode::search_mode() {
 
 			adachi::adachi_method(0, 0);
 		}
-
 		break;
-
-	case 3:
+	case 4:
 		mouse::set_position(0, 0);
 		mouse::set_direction(MUKI_UP);
-		if (adachi::adachi_method_wall_off(GOAL_x, GOAL_y)) {	//足立法が成功したら
+		if (adachi::adachi_method_verF(GOAL_x, GOAL_y)) {	//足立法が成功したら
 			wait_ms(100);
 			mouse::set_position(GOAL_x, GOAL_y);
 			run::spin_turn(180);
@@ -133,10 +147,8 @@ bool mode::search_mode() {
 			mouse::turn_direction(MUKI_RIGHT);
 			wait_ms(100);
 
-			adachi::adachi_method_wall_off(0, 0);
+			adachi::adachi_method_verF(0, 0);
 		}
-		break;
-	case 4:
 		break;
 
 	}

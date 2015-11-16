@@ -95,8 +95,8 @@ private:
 public:
 	static signed char right_duty,left_duty;
 
-	static void set_duty_left(const signed char set_duty);//左モーターのDuty決定
-	static void set_duty_right(const signed char set_duty);//右モーターのDuty決定
+	static void set_duty_left(const signed short set_duty);//左モーターのDuty決定
+	static void set_duty_right(const signed  short set_duty);//右モーターのDuty決定
 
 	static void sleep_motor();//モータードライバをスリープ状態に
 	static void stanby_motor();//モータードライバをスタンバイ状態に

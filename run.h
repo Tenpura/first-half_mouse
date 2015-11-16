@@ -44,6 +44,7 @@ private:
 
 public:
 
+	static bool back_run_flag;
 	static bool slalom_flag;
 	static MAP_DATA now_map;
 
@@ -161,8 +162,11 @@ private:
 
 public:
 
+	static bool adachi_method_spin(const unsigned char target_x, const unsigned char target_y);
 	static bool adachi_method(const unsigned char target_x, const unsigned char target_y);
-	static bool adachi_method_wall_off(const unsigned char target_x, const unsigned char target_y);
+	static bool adachi_method_verF(const unsigned char target_x, const unsigned char target_y);
+
+
 	~adachi();
 
 };

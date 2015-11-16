@@ -216,10 +216,11 @@ void gyro::set_least_square_slope() {
 		least_square_slope = 0;
 		return;
 	}
-	least_square_slope += (float) ((LEAST_SQUARE_TIME * xy_sum - x_sum * y_sum)
+	least_square_slope = (float) ((LEAST_SQUARE_TIME * xy_sum - x_sum * y_sum)
 			/ (LEAST_SQUARE_TIME * x_square_sum - x_sum * x_sum));
 
-//	least_square_slope *= 1.5;
+	//least_square_slope /= 2;
+
 }
 
 void gyro::set_gyro_ref() {
@@ -255,7 +256,7 @@ float gyro::get_angle() {
 	return angle;	//°
 }
 
-void gyro::set_angle(float set_degree){
+void gyro::set_angle(float set_degree) {
 	angle = set_degree;
 }
 
@@ -320,7 +321,7 @@ encoder::~encoder() {
 //motor関連
 signed char motor::right_duty = 0, motor::left_duty = 0;
 
-void motor::set_duty_left(const signed char set_duty) {
+void motor::set_duty_left(const signed short set_duty) {
 	//上限を切る
 	if (set_duty > MAX_DUTY) {
 		left_duty = MAX_DUTY;
@@ -352,7 +353,7 @@ signed short motor::get_duty_left() {
 	return left_duty;
 }
 
-void motor::set_duty_right(const signed char set_duty) {
+void motor::set_duty_right(const signed short set_duty) {
 	//上限を切る
 	if (set_duty > MAX_DUTY) {
 		right_duty = MAX_DUTY;
@@ -579,7 +580,7 @@ photo::~photo() {
 //XXX 各種ゲイン
 //control関連
 const PID gyro_gain = { 50, 150, 0 };
-const PID photo_gain = { 0.02, 0.0, 0.0 };
+const PID photo_gain = { 0.03, 0.01, 0.0 };
 const PID encoder_gain = { 280, 18000, 0 };
 
 const PID angle_gain = { 0, 0, 0 };		//角度に対するゲイン　Pゲインは角速度のIゲインと同じなので0にしとく
@@ -718,6 +719,11 @@ float control::control_velocity() {
 }
 
 float control::control_angular_velocity() {
+	if (mouse::back_run_flag) {
+		photo_delta.I = 0;
+		return cross_delta_gain(sen_gyro);
+	}
+
 	if (wall_control_flag) {
 		if (photo_delta.P == 0) {
 			//何もしない
@@ -727,6 +733,7 @@ float control::control_angular_velocity() {
 			angle_delta.I = 0;
 		}
 		return (cross_delta_gain(sen_gyro) + cross_delta_gain(sen_photo));
+
 	} else {
 		photo_delta.I = 0;
 		return cross_delta_gain(sen_gyro);

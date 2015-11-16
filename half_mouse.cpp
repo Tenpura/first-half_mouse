@@ -89,28 +89,16 @@ void main(void) {
 	map::reset_wall();
 	map::output_map_data(&mouse::now_map);
 
-	/*
-	 motor::stanby_motor();
-
-	 mouse::reset_angle();
-	 mouse::set_ideal_velocity(0);
-	 mouse::set_ideal_angular_velocity(0);
-	 control::reset_delta(sen_all);
-
-	 control::start_control();
-
-	 */
-
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+
+		myprintf("left %f, right %f\n\r", encoder::left_velocity,
+				encoder::right_velocity);
+
 		/*
-		 myprintf("left %f, right %f\n\r", encoder::left_velocity,
-		 encoder::right_velocity);
+		 myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
+		 photo::get_ad(left), photo::get_ad(front_right),
+		 photo::get_ad(front_left));
 		 */
-
-		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
-				photo::get_ad(left), photo::get_ad(front_right),
-				photo::get_ad(front_left));
-
 		if (photo::check_wall(MUKI_UP)) {
 			my7seg::light(6);
 		} else {
@@ -155,10 +143,22 @@ void main(void) {
 
 		float_log.reset_log();
 
-		//run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
-		//run::slalom(small, MUKI_LEFT, 0);
-		//run::accel_run(0.09 / MOUSE_MODE, 0, 0);
-		run::back_run(-0.18,0,0);
+		run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+
+		while (1) {
+
+			run::slalom(small, MUKI_LEFT, 0);
+
+			if (ABS(ABS(gyro::get_angle())-90.0) > 3.0) {
+				break;
+			}
+			float_log.reset_log();
+
+			run::accel_run(0.18 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+
+		}
+		run::accel_run(0.09 / MOUSE_MODE, 0, 0);
+		//run::back_run(-0.18,0,0);
 		wait_ms(1000);
 
 		break;
@@ -209,7 +209,7 @@ void main(void) {
 			mouse::set_distance_m(0);
 			//run::accel_run(0.18 * 2, 0, 0);
 			wait_ms(500);
-			run::spin_turn(180);
+			run::spin_turn(-180);
 			wait_ms(500);
 
 		}
@@ -247,10 +247,11 @@ void main(void) {
 		mouse::set_distance_m(0);
 		float_log.reset_log();
 
-		run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
-		run::accel_run_wall_off(0.18 * 2 / MOUSE_MODE, SEARCH_VELOCITY, 0,
-				0.18);
-		run::accel_run(0.09 / MOUSE_MODE, 0, 0);
+
+		 run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+		 run::accel_run_wall_off(0.18 * 2 / MOUSE_MODE, SEARCH_VELOCITY, 0,
+		 0.18);
+		 run::accel_run(0.09 / MOUSE_MODE, 0, 0);
 
 		wait_ms(1000);
 
@@ -294,7 +295,9 @@ void interrupt_cmt0() {
 
 	control::fail_safe();
 
-	float_log::put_log(gyro::get_angular_velocity(),mouse::get_ideal_angular_velocity());
+	float_log::put_log(gyro::get_angular_velocity(),
+			mouse::get_ideal_angular_velocity());
+	//motor::left_duty, motor::right_duty);
 
 //mouse::get_distance_m(), photo::get_ad(right));
 	//gyro::get_angular_velocity(),mouse::get_ideal_angular_velocity());
