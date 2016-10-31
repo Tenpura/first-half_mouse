@@ -8,10 +8,10 @@
 #include"parameter.h"
 //ideal_photo[x][y]	xは0がクラシック,1がハーフ	yが光学センサの向きに対応。
 //right left front_right front_left
-const signed int parameter::ideal_photo[2][4] = { { 2700, 3100, 3000, 1100 }, {
-		3000, 2700, 3000, 1100 } };
+const signed int parameter::ideal_photo[2][4] = { { 3100, 3200, 3000, 1100 }, {
+		2600, 2500, 3000, 1100 } };
 const signed int parameter::min_wall_photo[2][4] = {
-		{ 2000, 2300, 1300, 40000 }, { 3100, 2400, 2000, 400000 } };
+		{ 2300, 2500, 1300, 40000 }, { 3100, 2400, 2000, 400000 } };
 
 //0番目は探索用
 const TRAPEZOID parameter::straight_run[RUN_MODE_NUMBER] = { { 2.0,
@@ -20,17 +20,24 @@ SEARCH_VELOCITY, 2.0 }, { 2.0, 1.0, 2.0 }, { 2.0, 2.0, 2.0 }, { 3.0, 2.0, 3.0 },
 
 //velocity,target_angle,clotoid_angle,before,after,angular_accel,max_angular_velocity,time
 const INIT_SLALOM parameter::right_slalom[slalom_type_count][RUN_MODE_NUMBER] =
-		{
-				{ { 0 } },	//none
+		{ { { 0 } },	//none
 				{ { SEARCH_VELOCITY, 90, 30, 0.02, 0.025, 121.389, 11.274, 0 },
-						{ SEARCH_VELOCITY, 90, 30, 0.01, 0.02, 92.386, 9.865, 0 } },//small
+						{ SEARCH_VELOCITY, 90, 30, 0.02, 0.025, 121.389, 11.274,
+								0 }, { SEARCH_VELOCITY, 90, 30, 0.02, 0.025,
+								121.389, 11.274, 0 }, { SEARCH_VELOCITY, 90, 30,
+								0.02, 0.025, 121.389, 11.274, 0 }, {
+								SEARCH_VELOCITY, 90, 30, 0.02, 0.025, 121.389,
+								11.274, 0 } },	//small
 				{ { 0.85, 90, 30, 0.02, 0.02, 67.148, 8.3855, 0 }, { 0 } },	//big_90
 				{ { 0.85, 180, 60, 0.02, 0.02, 52.1571, 10.4517, 0 } } //big_180
 		};
 const INIT_SLALOM parameter::left_slalom[slalom_type_count][RUN_MODE_NUMBER] = {
 		{ { 0 } },	//none
-		{ { SEARCH_VELOCITY, 90, 30, 0.02, 0.025, 121.389, 11.274, 0 },
-				{ SEARCH_VELOCITY, 90, 30, 0.01, 0.025, 92.386, 9.865, 0 } },	//small
+		{ { SEARCH_VELOCITY, 90, 30, 0.02, 0.035, 121.389, 11.274, 0 }, {
+				SEARCH_VELOCITY, 90, 30, 0.02, 0.035, 121.389, 11.274, 0 }, {
+				SEARCH_VELOCITY, 90, 30, 0.02, 0.035, 121.389, 11.274, 0 }, {
+				SEARCH_VELOCITY, 90, 30, 0.02, 0.035, 121.389, 11.274, 0 }, {
+				SEARCH_VELOCITY, 90, 30, 0.02, 0.035, 121.389, 11.274, 0 } },//small
 		{ { 0.85, 90, 30, 0.02, 0.02, 67.148, 8.3855, 0 } },	//big_90
 		{ { 0.85, 180, 60, 0.02, 0.02, 52.1571, 10.4517, 0 } } //big_180
 };

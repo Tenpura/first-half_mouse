@@ -96,7 +96,7 @@ unsigned char mode::select_mode(const unsigned char mode_number,
 bool mode::search_mode() {
 	signed char direction_x, direction_y;
 
-	switch (select_mode(5, MUKI_RIGHT)) {
+	switch (select_mode(7, MUKI_RIGHT)) {
 	case 0:		//0はメニューに戻る
 		break;
 
@@ -136,10 +136,18 @@ bool mode::search_mode() {
 			adachi::adachi_method(0, 0);
 		}
 		break;
+
 	case 4:
 		mouse::set_position(0, 0);
 		mouse::set_direction(MUKI_UP);
-		if (adachi::adachi_method_verF(GOAL_x, GOAL_y)) {	//足立法が成功したら
+		if (adachi::adachi_method(GOAL_x, GOAL_y)) {	//足立法が成功したら
+		}
+		break;
+
+	case 5:
+		mouse::set_position(0, 0);
+		mouse::set_direction(MUKI_UP);
+		if (adachi::adachi_method_verF(GOAL_x, GOAL_y, false)) {//古川式足立法が成功したら
 			wait_ms(100);
 			mouse::set_position(GOAL_x, GOAL_y);
 			run::spin_turn(180);
@@ -147,8 +155,24 @@ bool mode::search_mode() {
 			mouse::turn_direction(MUKI_RIGHT);
 			wait_ms(100);
 
-			adachi::adachi_method_verF(0, 0);
+			adachi::adachi_method_verF(0, 0, false);
 		}
+		break;
+
+	case 6:
+		mouse::set_position(0, 0);
+		mouse::set_direction(MUKI_UP);
+		if (adachi::adachi_method_verF(GOAL_x, GOAL_y, true)) {	//古川式足立法（櫛無視）が成功したら
+			wait_ms(100);
+			mouse::set_position(GOAL_x, GOAL_y);
+			run::spin_turn(180);
+			mouse::turn_direction(MUKI_RIGHT);
+			mouse::turn_direction(MUKI_RIGHT);
+			wait_ms(100);
+
+			adachi::adachi_method_verF(0, 0, true);
+		}
+		break;
 		break;
 
 	}

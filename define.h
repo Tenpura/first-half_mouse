@@ -95,10 +95,10 @@ typedef union {
 typedef union {
 	unsigned short all;					//一括で見る
 	struct {
-		unsigned char :2;		//
+		unsigned char :1;		//
 		unsigned char flag :1;		//配列の最後かチェック用
 		unsigned char turn :4;		//ターンの種類を判別
-		unsigned char muki :1;		//ターンの方向を判別
+		unsigned char muki :2;		//ターンの方向を判別
 		unsigned char distance :8;		//直進する距離を判別
 	} element;
 } PATH;

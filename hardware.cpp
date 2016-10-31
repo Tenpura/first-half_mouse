@@ -389,6 +389,9 @@ void motor::mtu_set() {
 
 void motor::sleep_motor() {
 	PORTB.DR.BIT.B0 = 0;	//モータードライバースリープ
+	motor::set_duty_right(0);
+	motor::set_duty_left(0);
+
 }
 
 void motor::stanby_motor() {
@@ -579,8 +582,8 @@ photo::~photo() {
 
 //XXX 各種ゲイン
 //control関連
-const PID gyro_gain = { 50, 150, 0 };
-const PID photo_gain = { 0.03, 0.01, 0.0 };
+const PID gyro_gain = { 40, 150, 0 };
+const PID photo_gain = { 0.05, 0.01, 0.0 };
 const PID encoder_gain = { 280, 18000, 0 };
 
 const PID angle_gain = { 0, 0, 0 };		//角度に対するゲイン　Pゲインは角速度のIゲインと同じなので0にしとく
@@ -620,7 +623,9 @@ float control::cross_delta_gain(SEN_TYPE sensor) {
 }
 
 void control::cal_delta() {
-	const static char wall_brake = 8;	//壁の切れ目を判別するための閾値
+	const static char left_wall_brake = 4;	//壁の切れ目を判別するための閾値
+	const static char right_wall_brake = 3;
+
 	float before_p_delta;
 	volatile float photo_right_delta = 0, photo_left_delta = 0;
 	static float right_before, left_before;
@@ -658,7 +663,7 @@ void control::cal_delta() {
 
 		if (photo::check_wall(MUKI_RIGHT)) {		//右壁がある
 			//壁の切れ目に吸い込まれないように
-			if ((right_now - right_before) > wall_brake) {
+			if ((right_now - right_before) > right_wall_brake) {
 				photo_right_delta = 0;
 			} else {
 				photo_right_delta = (right_ideal - right_now);
@@ -666,7 +671,7 @@ void control::cal_delta() {
 
 			if (photo::check_wall(MUKI_LEFT)) {		//両壁がある
 				//壁の切れ目に吸い込まれないように
-				if ((left_now - left_before) > wall_brake) {
+				if ((left_now - left_before) > left_wall_brake) {
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = (left_ideal - left_now);
@@ -682,7 +687,7 @@ void control::cal_delta() {
 
 			if (photo::check_wall(MUKI_LEFT)) {		//左だけある
 				//壁の切れ目に吸い込まれないように
-				if ((left_now - left_before) > wall_brake) {
+				if ((left_now - left_before) > left_wall_brake) {
 					photo_left_delta = 0;
 				} else {
 					photo_left_delta = 2 * (left_ideal - left_now);
@@ -854,8 +859,9 @@ void control::reset_delta(SEN_TYPE sensor_type) {
 
 void control::fail_safe() {
 //TODO 閾値どのくらいかわからない。Gyroも参照すべき？
-	if (ABS(encoder_delta.P) > 0.7) {
+	if (ABS(encoder_delta.P) > 0.8) {
 		motor::sleep_motor();
+		control::stop_control();
 		mouse::set_fail_flag(true);
 	}
 }

@@ -164,7 +164,7 @@ public:
 
 	static bool adachi_method_spin(const unsigned char target_x, const unsigned char target_y);
 	static bool adachi_method(const unsigned char target_x, const unsigned char target_y);
-	static bool adachi_method_verF(const unsigned char target_x, const unsigned char target_y);
+	static bool adachi_method_verF(const unsigned char target_x, const unsigned char target_y,const bool comb_ignore);		//comb_ignore 櫛無視
 
 
 	~adachi();

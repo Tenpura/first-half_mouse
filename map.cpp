@@ -747,8 +747,8 @@ void step::set_step(unsigned char target_x, unsigned char target_y) {
 
 void step::set_step_by_known(unsigned char target_x, unsigned char target_y) {
 	//座標を管理するための配列
-	unsigned char x_coordinate[965] = { 0 };
-	unsigned char y_coordinate[965] = { 0 };
+	unsigned char x_coordinate[257] = { 0 };
+	unsigned char y_coordinate[257] = { 0 };
 
 	unsigned char x_count = 0, y_count = 0;	//一時的に座標をもっとくよう
 	unsigned char head, tail;		//
@@ -1147,7 +1147,9 @@ void path::create_path() {
 	SAVE_DIRECTION save_direction;				//次に行くマスの方向を保存
 	unsigned int count = 0;	//数を数えるだけの変数
 
-	set_step_for_shortest(GOAL_x, GOAL_y);
+	//set_step_for_shortest(GOAL_x,GOAL_y);
+
+	set_step_by_known(GOAL_x, GOAL_y);
 
 	path_reset();
 
@@ -1170,8 +1172,9 @@ void path::create_path() {
 		path_x += path_direction_x; 		//位置修正
 		path_y += path_direction_y;
 
-		if ((path_x == GOAL_x) && (path_y == GOAL_y))
+		if ((path_x == GOAL_x) && (path_y == GOAL_y)){
 			break;	//GOALにたどり着いたら終了
+		}
 
 		//左
 		if ((path_x - 1) >= 0) {		//path_x-1,path_yの座標が迷路内(0以上)である
@@ -1225,6 +1228,8 @@ void path::create_path() {
 				}
 			}
 		}
+
+
 
 		if (straight_flag == TRUE) {			//直進できるなら
 			path_memory[count].element.distance += 2;	//180mm直進を追加
@@ -1289,9 +1294,9 @@ void path::create_path() {
 					}
 				}
 			}
-
-			path_memory[count].element.flag = TRUE;		//パスが続くのなら続行フラグを建てる
 			count++;
+			path_memory[count].element.flag = TRUE;		//パスが続くのなら続行フラグを建てる
+
 		}
 
 	}
@@ -1311,6 +1316,22 @@ void path::create_path_naname() {
 	improve_advance_path();
 }
 
+void path::draw_path() {
+	myprintf("path-start \n\r");
+
+	for (int i = 0; path_memory[i].element.flag == TRUE; i++) {
+		myprintf("distance -> %d \n\r", path_memory[i].element.distance);
+		myprintf("turn -> %d ", path_memory[i].element.turn);
+		if (path_memory[i].element.muki == MUKI_RIGHT) {
+			myprintf("R\n\r");
+		} else if (path_memory[i].element.muki == MUKI_LEFT) {
+			myprintf("L\n\r");
+		}
+	}
+	myprintf("path-end \n\r");
+
+}
+
 void path::path_reset() {
 	unsigned int reset_count;
 	for (reset_count = 0; reset_count < PATH_MAX; reset_count++) {
@@ -1318,7 +1339,7 @@ void path::path_reset() {
 	}
 }
 
-bool path::get_path_flag(unsigned int index_number) {
+bool path::get_path_flag(signed int index_number) {
 	//pathがあるならtrue,ないならfalseを返す
 	if (path_memory[index_number].element.flag == TRUE) {
 		return true;
@@ -1329,7 +1350,7 @@ bool path::get_path_flag(unsigned int index_number) {
 }
 
 float path::get_path_straight(unsigned int index_number) {
-	return (0.09 * path_memory[index_number].element.distance / MOUSE_MODE);
+	return (0.09 * (float)path_memory[index_number].element.distance / MOUSE_MODE);
 }
 
 SLALOM_TYPE path::get_path_turn_type(unsigned int index_number) {

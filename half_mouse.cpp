@@ -90,15 +90,15 @@ void main(void) {
 	map::output_map_data(&mouse::now_map);
 
 	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+	/*
+	 myprintf("left %f, right %f\n\r", encoder::left_velocity,
+	 encoder::right_velocity);
+	 */
 
-		myprintf("left %f, right %f\n\r", encoder::left_velocity,
-				encoder::right_velocity);
+		myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
+				photo::get_ad(left), photo::get_ad(front_right),
+				photo::get_ad(front_left));
 
-		/*
-		 myprintf("r %d , l %d , fr %d , fl %d\n\r", photo::get_ad(right),
-		 photo::get_ad(left), photo::get_ad(front_right),
-		 photo::get_ad(front_left));
-		 */
 		if (photo::check_wall(MUKI_UP)) {
 			my7seg::light(6);
 		} else {
@@ -109,158 +109,141 @@ void main(void) {
 
 	}
 
-	motor::sleep_motor();
+	while (1) {
+		map::input_map_data(&mouse::now_map);
 
-	char select_mode = mode::select_mode(6, MUKI_RIGHT);
-	carcuit::set_run_mode(select_mode);
+		motor::sleep_motor();
 
-	while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
-		my7seg::light(select_mode);
+		char select_mode = mode::select_mode(6, MUKI_RIGHT);
+		carcuit::set_run_mode(select_mode);
 
-	}
+		while ((SWITCH_RIGHT == OFF) && (SWITCH_LEFT == OFF)) {	//押されてなければ待機
+			my7seg::light(select_mode);
 
-	my7seg::turn_off();
+		}
+
+		my7seg::turn_off();
+		gyro::reset_angle();
+		control::reset_delta(sen_all);
+		mouse::set_fail_flag(false);
+		mouse::set_distance_m(0);
 
 //	gyro::set_gyro_ref();
 
-	switch (select_mode) {
-	case 0:
-		mouse::set_fail_flag(false);
-
-		motor::stanby_motor();
-
-		mouse::reset_angle();
-		mouse::set_ideal_velocity(0);
-		mouse::set_ideal_angular_velocity(0);
-		control::reset_delta(sen_all);
-
-		control::start_control();
-		my7seg::count_down(3, 500);
-
-		control::start_wall_control();
-
-		mouse::set_distance_m(0);
-
-		float_log.reset_log();
-
-		run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
-
-		while (1) {
-
-			run::slalom(small, MUKI_LEFT, 0);
-
-			if (ABS(ABS(gyro::get_angle())-90.0) > 3.0) {
-				break;
-			}
-			float_log.reset_log();
-
-			run::accel_run(0.18 / MOUSE_MODE, SEARCH_VELOCITY, 0);
-
-		}
-		run::accel_run(0.09 / MOUSE_MODE, 0, 0);
-		//run::back_run(-0.18,0,0);
-		wait_ms(1000);
-
-		break;
-
-	case 1:
-		my7seg::turn_off();
-		wait_ms(1000);
-		mouse::set_position(0, 0);
-		mouse::set_direction(MUKI_UP);
-		mode::search_mode();
-		break;
-
-	case 2:
-		my7seg::turn_off();
-		wait_ms(1000);
-		signed char carcuit_mode = mode::select_mode(RUN_MODE_NUMBER,
-		MUKI_RIGHT);
-		carcuit::set_run_mode(carcuit_mode);
-		switch (carcuit_mode) {
+		switch (select_mode) {
 		case 0:
-			carcuit::run_carcuit(16, 16, 2, false);
-			break;
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-			carcuit::run_carcuit(16, 16, 2, true);
-			break;
-		}
+			mouse::set_fail_flag(false);
 
-		break;
+			motor::stanby_motor();
 
-	case 3:
-		wait_ms(1000);
-		mouse::set_fail_flag(false);
-		motor::stanby_motor();
-		mouse::reset_angle();
-		mouse::set_ideal_velocity(0);
-		mouse::set_ideal_angular_velocity(0);
-		control::reset_delta(sen_all);
-		control::start_control();
-		my7seg::count_down(3, 500);
-		control::start_wall_control();
+			mouse::reset_angle();
+			mouse::set_ideal_velocity(0);
+			mouse::set_ideal_angular_velocity(0);
+			control::reset_delta(sen_all);
 
-		while (mouse::get_fail_flag() == false) {
-			float_log.reset_log();
+			control::start_control();
+			my7seg::count_down(3, 500);
+
+			control::start_wall_control();
 
 			mouse::set_distance_m(0);
-			//run::accel_run(0.18 * 2, 0, 0);
-			wait_ms(500);
-			run::spin_turn(-180);
-			wait_ms(500);
 
+			float_log.reset_log();
+
+			//run::spin_turn(360);
+
+			run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+			run::slalom(small, MUKI_RIGHT, 0);
+			run::accel_run(0.09 / MOUSE_MODE, 0, 0);
+
+			//run::back_run(-0.18,0,0);
+			wait_ms(1000);
+
+			break;
+
+		case 1:
+			my7seg::turn_off();
+			wait_ms(1000);
+			mouse::set_position(0, 0);
+			mouse::set_direction(MUKI_UP);
+			mode::search_mode();
+			break;
+
+		case 2:
+			my7seg::turn_off();
+			wait_ms(1000);
+			signed char carcuit_mode = mode::select_mode(RUN_MODE_NUMBER,
+			MUKI_RIGHT);
+			carcuit::set_run_mode(carcuit_mode);
+			switch (carcuit_mode) {
+			case 0:
+				carcuit::run_carcuit(16, 16, 2, false);
+				break;
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+				carcuit::run_carcuit(16, 16, 2, true);
+				break;
+			}
+
+			break;
+
+		case 3:
+			path::create_path();
+			wait_ms(500);
+			select_mode = mode::select_mode(5, MUKI_RIGHT);
+			wait_ms(500);
+			if (select_mode == 4) {
+
+			} else {
+				run::path(0, select_mode);
+			}
+			break;
+
+		case 4:
+			map::draw_map();
+			path::create_path();
+			path::draw_path();
+			break;
+
+		case 5:
+			wait_ms(1000);
+
+			mouse::set_fail_flag(false);
+
+			motor::stanby_motor();
+
+			mouse::reset_angle();
+			mouse::set_ideal_velocity(0);
+			mouse::set_ideal_angular_velocity(0);
+			control::reset_delta(sen_all);
+
+			control::start_control();
+			my7seg::count_down(3, 500);
+
+			control::start_wall_control();
+			mouse::set_distance_m(0);
+			float_log.reset_log();
+			/*
+			 run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
+			 run::accel_run_wall_off(0.18 * 2 / MOUSE_MODE, SEARCH_VELOCITY, 0,
+			 0.18);
+
+			 run::accel_run(0.09 / MOUSE_MODE, 0, 0);
+			 */
+			run::accel_run(0.18 * 10, 0, 4);
+
+			wait_ms(1000);
+
+			break;
 		}
 
-		break;
-	case 4:
-		my7seg::count_down(3, 500);
-		motor::stanby_motor();
-		float_log.reset_log();
-		left_hand::run2(3, 3);
-		wait_ms(1000);
-		break;
-
-	case 5:
+		//adachi::run_next_action(stop);
+		motor::sleep_motor();
 		wait_ms(1000);
 
-		mouse::set_fail_flag(false);
-
-		motor::stanby_motor();
-
-		mouse::reset_angle();
-		mouse::set_ideal_velocity(0);
-		mouse::set_ideal_angular_velocity(0);
-		control::reset_delta(sen_all);
-
-		control::start_control();
-		my7seg::count_down(3, 500);
-
-		/*
-		 while (1) {
-		 mouse::slalom_flag=true;
-		 }
-		 */
-		control::start_wall_control();
-		mouse::set_distance_m(0);
-		float_log.reset_log();
-
-
-		 run::accel_run(0.09 / MOUSE_MODE, SEARCH_VELOCITY, 0);
-		 run::accel_run_wall_off(0.18 * 2 / MOUSE_MODE, SEARCH_VELOCITY, 0,
-		 0.18);
-		 run::accel_run(0.09 / MOUSE_MODE, 0, 0);
-
-		wait_ms(1000);
-
-		break;
 	}
-
-	//adachi::run_next_action(stop);
-	motor::sleep_motor();
-	wait_ms(1000);
 
 	my7seg::light(8);
 
@@ -297,6 +280,7 @@ void interrupt_cmt0() {
 
 	float_log::put_log(gyro::get_angular_velocity(),
 			mouse::get_ideal_angular_velocity());
+
 	//motor::left_duty, motor::right_duty);
 
 //mouse::get_distance_m(), photo::get_ad(right));

@@ -73,9 +73,6 @@ public:
 
 	static void close_dead_end();//マップ上の袋小路をつぶす
 
-
-
-
 	step();
 	step(const MAP_DATA* input_data);
 	~step();
@@ -96,18 +93,21 @@ private:
 	}SAVE_DIRECTION;				//次に行くマスの方向を保存
 	static PATH path_memory[PATH_MAX];	//flagは続行フラグ
 
-	void set_step_for_shortest(unsigned char target_x,unsigned char target_y);//最短用の歩数マップ作製
+	static void set_step_for_shortest(unsigned char target_x,unsigned char target_y);//最短用の歩数マップ作製
 	void displace_path(unsigned int path_number);//path_number目のpathを消してからpathを一個ずらす
 	void improve_path();//小回りだけのpathに大回りを追加
 	void improve_advance_path();//小回りだけのpathに大回りと斜めを追加
 
 public:
-	void create_path();//小回りだけのパス
+
+	static void create_path();//小回りだけのパス
 	void create_path_advance();//大回りを追加したパス(ナナメはナシ)
 	void create_path_naname();//大回りとナナメを追加したパス
 
-	void path_reset();
-	static bool get_path_flag(unsigned int index_number);				//pathがあるならtrue,ないならfalseを返す.
+	static void draw_path();
+
+	static void path_reset();
+	static bool get_path_flag(signed int index_number);				//pathがあるならtrue,ないならfalseを返す.
 	static float get_path_straight(unsigned int index_number);			//返り値は距離[m]
 	static SLALOM_TYPE get_path_turn_type(unsigned int index_number);
 	static unsigned char get_path_turn_muki(unsigned int index_number);		//返り値はMUKI_RIGHT　or　MUKI_LEFT

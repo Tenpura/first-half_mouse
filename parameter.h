@@ -15,7 +15,7 @@
 #define TREAD_W	44		//トレッド幅[mm]
 
 #define WALL_BRAKE 10	//1msでこれだけセンサー値が変化したら壁の切れ目
-#define WALL_OFF_DISTANCE_RIGHT 0.083		//壁切れ検知からどれだけ進むか[m]
+#define WALL_OFF_DISTANCE_RIGHT 0.085		//壁切れ検知からどれだけ進むか[m]
 #define WALL_OFF_DISTANCE_LEFT 0.08		//壁切れ検知からどれだけ進むか[m]
 
 #define MOVING_AVERAGE		3						//encoderでいくつの移動平均をとるか
